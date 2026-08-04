@@ -588,7 +588,7 @@ main > section {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: clamp(16px, 4vh, 48px) 5vw clamp(24px, 6vh, 72px);
+  padding: 6vh 5vw 10vh;
   text-align: center;
   overflow: hidden;
   box-sizing: border-box;
@@ -598,16 +598,15 @@ main > section {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.08em;
-  max-height: 100%;
+  gap: 0.1em;
 }
 .belong-lead,
 .belong-end,
 .belong-word {
   font-family: var(--display);
   font-weight: 400;
-  /* vmin keeps type fitting short Mac laptop viewports, not just wide ones */
-  font-size: clamp(1.85rem, 6.2vmin, 6.2rem);
+  /* Prefer large width-based type; vh cap only kicks in on short screens */
+  font-size: clamp(2.4rem, min(8.2vw, 8.8vh), 7.2rem);
   line-height: 1.02;
   letter-spacing: -0.03em;
   margin: 0;
@@ -617,7 +616,7 @@ main > section {
 }
 .belong-words {
   list-style: none;
-  margin: 0.08em 0;
+  margin: 0.12em 0;
   padding: 0;
   width: 100%;
 }
@@ -628,9 +627,9 @@ main > section {
   color: #fffaf5;
 }
 .belong-apply {
-  margin-top: clamp(1em, 3.5vh, 2.2em);
+  margin-top: 2em;
   font-family: var(--body);
-  font-size: clamp(1.05rem, 2.4vmin, 2rem);
+  font-size: clamp(1.35rem, min(3vw, 3.2vh), 2.2rem);
   font-weight: 500;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -643,23 +642,11 @@ main > section {
 
 @media (max-width: 900px) {
   .belong { height: 240vh; }
-  .belong-pin { padding: clamp(12px, 3vh, 32px) 6vw; }
+  .belong-pin { padding: 5vh 6vw 8vh; }
   .belong-lead,
   .belong-end,
   .belong-word {
-    font-size: clamp(1.7rem, 7.5vmin, 3.4rem);
-  }
-}
-
-@media (max-height: 720px) {
-  .belong-lead,
-  .belong-end,
-  .belong-word {
-    font-size: clamp(1.5rem, 5.4vmin, 3.2rem);
-  }
-  .belong-apply {
-    margin-top: 0.85em;
-    font-size: clamp(0.95rem, 2.2vmin, 1.35rem);
+    font-size: clamp(2rem, min(10vw, 8vh), 3.6rem);
   }
 }
 
