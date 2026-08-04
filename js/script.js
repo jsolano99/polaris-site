@@ -36,21 +36,32 @@
   const containers = document.querySelectorAll('.statement-body');
   if (!containers.length) return;
 
-  const blocks = Array.from(containers).map((container) => {
-    container.querySelectorAll('p').forEach((p) => {
-      const text = p.textContent;
-      p.innerHTML = text
-        .split(/(\s+)/)
-        .map((chunk) => {
-          if (chunk.trim() === '') return chunk;
-          const letters = chunk
-            .split('')
-            .map((ch) => `<span class="sw">${ch}</span>`)
-            .join('');
-          return `<span class="sw-word">${letters}</span>`;
-        })
-        .join('');
+  function wrapChunk(chunk, italic) {
+    if (chunk.trim() === '') return chunk;
+    const letters = chunk
+      .split('')
+      .map((ch) => `<span class="sw">${ch}</span>`)
+      .join('');
+    const word = `<span class="sw-word">${letters}</span>`;
+    return italic ? `<em>${word}</em>` : word;
+  }
+
+  function wrapParagraph(p) {
+    let html = '';
+    p.childNodes.forEach((node) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        html += node.textContent.split(/(\s+)/).map((c) => wrapChunk(c, false)).join('');
+      } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'EM') {
+        html += node.textContent.split(/(\s+)/).map((c) => wrapChunk(c, true)).join('');
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        html += node.textContent.split(/(\s+)/).map((c) => wrapChunk(c, false)).join('');
+      }
     });
+    p.innerHTML = html;
+  }
+
+  const blocks = Array.from(containers).map((container) => {
+    container.querySelectorAll('p').forEach(wrapParagraph);
     return { container, letters: Array.from(container.querySelectorAll('.sw')) };
   });
 
@@ -58,10 +69,17 @@
 
   function update() {
     ticking = false;
-    const readLine = window.innerHeight * 0.6;
+    // Reading line near the bottom of the viewport so the sweep starts as soon
+    // as the paragraph enters view — by the time the statement section is
+    // framed, a solid chunk of the body has already filled in.
+    const readLine = window.innerHeight * 0.9;
     blocks.forEach(({ container, letters }) => {
       const rect = container.getBoundingClientRect();
-      const progress = Math.min(1, Math.max(0, (readLine - rect.top) / rect.height));
+      // Modest lead-in so reveal begins before the top hits the reading line,
+      // with a longer travel so the fill sweeps more gradually through scroll.
+      const lead = window.innerHeight * 0.15;
+      const travel = Math.max(rect.height * 1.05, 1);
+      const progress = Math.min(1, Math.max(0, (readLine + lead - rect.top) / (travel + lead)));
       const revealCount = Math.round(progress * letters.length);
       letters.forEach((l, i) => l.classList.toggle('is-revealed', i < revealCount));
     });
@@ -73,6 +91,401 @@
       if (!ticking) {
         ticking = true;
         requestAnimationFrame(update);
+      }
+    },
+    { passive: true }
+  );
+  window.addEventListener('resize', update);
+  update();
+})();
+
+// Statement → Community → Creator cards (fooror-style sticky parade).
+// Phase 1: statement fades, polaroids rearrange into a linear row.
+// Phase 2: community copy fades in and stays pinned.
+// Phase 3: creator cards float up over the copy one by one; after the last
+// card exits, the section unpins into the next page section.
+(function communityScrollStory() {
+  const story = document.querySelector('.story');
+  const copy = document.querySelector('.story-copy');
+  const communityCopy = document.querySelector('.community-copy');
+  const polaroidLayer = document.querySelector('.community-polaroids');
+  const polaroids = Array.from(document.querySelectorAll('.comm-polaroid'));
+  const creatorCards = Array.from(document.querySelectorAll('.creator-card'));
+  if (!story || !copy || !polaroids.length) return;
+
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Share of the runway spent on the polaroid intro before cards take over.
+  const INTRO_END = 0.28;
+  const COPY_IN_START = 0.18;
+  const CARDS_START = 0.30;
+
+  // from = peeking along the bottom edge (never overlapping the statement);
+  // to = linear scattered row across the top once the copy has faded.
+  const desktop = [
+    { from: { x: -2, y: 82, w: 13, rot: -8 }, to: { x: -1, y: 8, w: 14, rot: -5 }, ar: '1 / 0.95', z: 3 },
+    { from: { x: 12, y: 88, w: 15, rot: 4 }, to: { x: 14, y: 18, w: 13, rot: 3 }, ar: '0.85 / 1', z: 5 },
+    { from: { x: 28, y: 80, w: 12, rot: -3 }, to: { x: 29, y: 6, w: 15, rot: -4 }, ar: '1 / 0.8', z: 2 },
+    { from: { x: 42, y: 90, w: 14, rot: 6 }, to: { x: 46, y: 16, w: 12, rot: 2.5 }, ar: '0.82 / 1', z: 6 },
+    { from: { x: 56, y: 83, w: 13, rot: -5 }, to: { x: 60, y: 7, w: 14, rot: -3 }, ar: '1 / 0.9', z: 4 },
+    { from: { x: 70, y: 89, w: 14, rot: 3 }, to: { x: 75, y: 20, w: 12, rot: 4 }, ar: '0.88 / 1', z: 3 },
+    { from: { x: 84, y: 81, w: 12, rot: -6 }, to: { x: 88, y: 10, w: 13, rot: -2 }, ar: '1 / 0.85', z: 5 },
+  ];
+  const mobile = [
+    { from: { x: -4, y: 84, w: 30, rot: -6 }, to: { x: -2, y: 6, w: 34, rot: -4 }, ar: '1 / 0.95', z: 3 },
+    { from: { x: 28, y: 90, w: 34, rot: 5 }, to: { x: 36, y: 10, w: 32, rot: 3 }, ar: '0.85 / 1', z: 5 },
+    { from: { x: 62, y: 85, w: 32, rot: -3 }, to: { x: 68, y: 8, w: 30, rot: -3.5 }, ar: '1 / 0.8', z: 2 },
+    { from: { x: 8, y: 96, w: 28, rot: 4 }, to: { x: 4, y: 36, w: 32, rot: 2 }, ar: '0.82 / 1', z: 4 },
+    { from: { x: 42, y: 98, w: 30, rot: -5 }, to: { x: 40, y: 40, w: 30, rot: -2 }, ar: '1 / 0.9', z: 6 },
+    { from: { x: 72, y: 94, w: 28, rot: 3 }, to: { x: 70, y: 38, w: 28, rot: 4 }, ar: '0.88 / 1', z: 3 },
+    { from: { x: 20, y: 102, w: 26, rot: -4 }, to: { x: 18, y: 58, w: 28, rot: -3 }, ar: '1 / 0.85', z: 5 },
+  ];
+
+  // Slight left/right drift + tilt so the parade doesn't feel like a slot machine.
+  const cardMotion = [
+    { x: -6, rot: -3 },
+    { x: 7, rot: 2.5 },
+    { x: -4, rot: -2 },
+    { x: 8, rot: 3 },
+  ];
+
+  const state = polaroids.map((el) => ({ el, from: null, to: null }));
+
+  function lerp(a, b, t) {
+    return a + (b - a) * t;
+  }
+  function clamp(n, min, max) {
+    return Math.min(max, Math.max(min, n));
+  }
+  function easeInOut(t) {
+    return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  }
+
+  function layout() {
+    const keyframes = window.innerWidth < 900 ? mobile : desktop;
+    state.forEach((s, i) => {
+      const k = keyframes[i];
+      if (!k) return;
+      s.from = k.from;
+      s.to = k.to;
+      s.el.style.aspectRatio = k.ar;
+      s.el.style.zIndex = String(k.z);
+    });
+  }
+
+  function apply(progress) {
+    const introT = easeInOut(clamp(progress / INTRO_END, 0, 1));
+
+    // Statement fades across the intro.
+    const copyOpacity = 1 - clamp(progress / (INTRO_END * 0.85), 0, 1);
+    copy.style.opacity = String(copyOpacity);
+    copy.style.filter = copyOpacity < 1 ? `blur(${(1 - copyOpacity) * 6}px)` : 'none';
+
+    // Polaroids rearrange during intro, then dim while cards parade.
+    state.forEach(({ el, from, to }) => {
+      if (!from || !to) return;
+      const x = lerp(from.x, to.x, introT);
+      const y = lerp(from.y, to.y, introT);
+      const w = lerp(from.w, to.w, introT);
+      const rot = lerp(from.rot, to.rot, introT);
+      el.style.width = w + '%';
+      el.style.transform = `translate(${x}vw, ${y}vh) rotate(${rot}deg)`;
+    });
+    if (polaroidLayer) {
+      const dim = progress > INTRO_END ? clamp(1 - (progress - INTRO_END) / 0.12, 0.25, 1) : 1;
+      polaroidLayer.style.opacity = String(dim);
+    }
+
+    // Community copy fades in near the end of the intro and stays pinned.
+    const headT = clamp((progress - COPY_IN_START) / (INTRO_END - COPY_IN_START), 0, 1);
+    if (communityCopy) {
+      communityCopy.style.opacity = String(headT);
+      communityCopy.style.transform = `translateY(calc(-50% + ${(1 - headT) * 28}px))`;
+    }
+
+    // Creator cards: each rides from below the fold, through center, off the top.
+    const n = creatorCards.length;
+    if (n) {
+      const cardRun = Math.max(1 - CARDS_START, 0.001);
+      // Travel window per card — shorter = snappier pass-through.
+      const windowSize = cardRun / (n * 0.75);
+      // Start the next card while the previous is still mid-screen (~40% through).
+      const stagger = windowSize * 0.4;
+
+      creatorCards.forEach((card, i) => {
+        const start = CARDS_START + i * stagger;
+        const local = clamp((progress - start) / windowSize, 0, 1);
+        const eased = easeInOut(local);
+        const motion = cardMotion[i % cardMotion.length];
+        // Enter just under the fold so the gap to the copy isn't a huge empty band.
+        const y = lerp(92, -42, eased);
+        const x = motion.x;
+        const rot = motion.rot;
+        const fade = local < 0.06 ? local / 0.06 : local > 0.94 ? (1 - local) / 0.06 : 1;
+        card.style.opacity = String(clamp(fade, 0, 1));
+        card.style.transform = `translate(calc(-50% + ${x}vw), ${y}vh) rotate(${rot}deg)`;
+        card.style.zIndex = String(10 + i);
+      });
+    }
+  }
+
+  let ticking = false;
+  function update() {
+    ticking = false;
+    const rect = story.getBoundingClientRect();
+    const travel = story.offsetHeight - window.innerHeight;
+    if (travel <= 0) {
+      apply(1);
+      return;
+    }
+    const progress = clamp(-rect.top / travel, 0, 1);
+    apply(progress);
+  }
+
+  layout();
+
+  if (prefersReducedMotion) {
+    apply(1);
+    creatorCards.forEach((card, i) => {
+      card.style.opacity = i === creatorCards.length - 1 ? '1' : '0';
+      card.style.transform = 'translate(-50%, 28vh) rotate(0deg)';
+    });
+    return;
+  }
+
+  window.addEventListener(
+    'scroll',
+    () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(update);
+      }
+    },
+    { passive: true }
+  );
+  window.addEventListener('resize', () => {
+    layout();
+    update();
+  });
+  update();
+})();
+
+// This is Polaris: vertical carousel with clock-like ticks.
+// Smooth eased glide between seats. Only the center word is fully filled —
+// opacity falls off continuously above/below (no font-weight jumps).
+(function polarisVerticalCarousel() {
+  const list = document.getElementById('access-list');
+  const carousel = document.querySelector('.access-carousel');
+  if (!list || !carousel) return;
+
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const labels = Array.from(list.querySelectorAll('.access-item')).map((el) => el.textContent.trim());
+  const n = labels.length;
+  if (!n) return;
+
+  const GLIDE_MS = 850;
+  const PAUSE_MS = 1300;
+
+  list.innerHTML = '';
+  for (let copy = 0; copy < 3; copy++) {
+    labels.forEach((label) => {
+      const li = document.createElement('li');
+      li.className = 'access-item';
+      li.textContent = label;
+      list.appendChild(li);
+    });
+  }
+
+  const nodes = Array.from(list.querySelectorAll('.access-item'));
+  let offset = n;
+  let animating = false;
+  let pauseTimer = 0;
+  let raf = 0;
+  let itemH = 80;
+  let active = true; // false while off-screen or reduced-motion
+
+  function easeInOutCubic(t) {
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  }
+
+  function alphaForDistance(dist) {
+    if (dist < 0.15) return 1;
+    if (dist < 1) return 0.72 - (dist - 0.15) * 0.28;
+    if (dist < 2) return 0.48 - (dist - 1) * 0.22;
+    return Math.max(0.14, 0.26 - (dist - 2) * 0.1);
+  }
+
+  function measure() {
+    itemH = nodes[0] ? nodes[0].getBoundingClientRect().height : 80;
+  }
+
+  function paint(pos) {
+    const centerY = (carousel.clientHeight - itemH) / 2;
+    list.style.transform = `translateY(${centerY - pos * itemH}px)`;
+    nodes.forEach((el, i) => {
+      el.style.color = `rgba(22, 21, 27, ${alphaForDistance(Math.abs(i - pos))})`;
+    });
+  }
+
+  function snapIfNeeded() {
+    if (offset >= n * 2) {
+      offset -= n;
+      paint(offset);
+    }
+  }
+
+  function clearTimers() {
+    clearTimeout(pauseTimer);
+    pauseTimer = 0;
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0;
+  }
+
+  function glideToNext() {
+    if (!active || animating) return;
+    animating = true;
+    const start = offset;
+    const end = offset + 1;
+    const t0 = performance.now();
+
+    function frame(now) {
+      if (!active) {
+        animating = false;
+        return;
+      }
+      const p = Math.min(1, (now - t0) / GLIDE_MS);
+      offset = start + (end - start) * easeInOutCubic(p);
+      paint(offset);
+
+      if (p < 1) {
+        raf = requestAnimationFrame(frame);
+        return;
+      }
+
+      offset = end;
+      animating = false;
+      snapIfNeeded();
+      paint(offset);
+      // Always queue the next tick — this is what keeps the loop alive.
+      pauseTimer = window.setTimeout(glideToNext, PAUSE_MS);
+    }
+
+    raf = requestAnimationFrame(frame);
+  }
+
+  function startLoop() {
+    active = true;
+    clearTimers();
+    animating = false;
+    offset = Math.round(offset);
+    snapIfNeeded();
+    paint(offset);
+    pauseTimer = window.setTimeout(glideToNext, PAUSE_MS);
+  }
+
+  function stopLoop() {
+    active = false;
+    clearTimers();
+    animating = false;
+    offset = Math.round(offset);
+    snapIfNeeded();
+    paint(offset);
+  }
+
+  measure();
+  paint(offset);
+  window.addEventListener('resize', () => {
+    measure();
+    paint(offset);
+  });
+
+  if (prefersReducedMotion) return;
+
+  // Run only while the section is on screen; always restart when it re-enters.
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) startLoop();
+          else stopLoop();
+        });
+      },
+      { threshold: 0.2 }
+    );
+    io.observe(carousel);
+  } else {
+    startLoop();
+  }
+
+  // If the tab was backgrounded mid-glide, kick the loop again on return.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && active && !animating && !pauseTimer) {
+      pauseTimer = window.setTimeout(glideToNext, 200);
+    }
+  });
+})();
+
+// Belong CTA: as the user scrolls the blue runway, creators → founders →
+// thinkers → dreamers fill from shaded to solid white, one after another.
+// While this section is on screen, hide the fixed header apply link so only
+// the in-section CTA remains.
+(function belongScrollFill() {
+  const section = document.querySelector('.belong');
+  const words = Array.from(document.querySelectorAll('#belong-words .belong-word'));
+  const header = document.querySelector('.site-header');
+  if (!section || !words.length) return;
+
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const DIM = 'rgba(255, 250, 245, 0.2)';
+  const FULL = 'rgba(255, 250, 245, 1)';
+
+  function lerpColor(t) {
+    const a = 0.2 + (1 - 0.2) * t;
+    return `rgba(255, 250, 245, ${a})`;
+  }
+
+  function paint(progress) {
+    const n = words.length;
+    words.forEach((el, i) => {
+      const start = i / n;
+      const end = (i + 1) / n;
+      let t = (progress - start) / (end - start);
+      t = Math.min(1, Math.max(0, t));
+      el.style.color = t <= 0 ? DIM : t >= 1 ? FULL : lerpColor(t);
+    });
+  }
+
+  function update() {
+    const rect = section.getBoundingClientRect();
+    const travel = section.offsetHeight - window.innerHeight;
+    if (travel <= 0) {
+      paint(1);
+    } else {
+      const progress = Math.min(1, Math.max(0, -rect.top / travel));
+      paint(progress);
+    }
+
+    // Hide header apply while the blue section owns the viewport.
+    if (header) {
+      const covering = rect.top < window.innerHeight * 0.35 && rect.bottom > window.innerHeight * 0.55;
+      header.classList.toggle('is-hidden', covering);
+    }
+  }
+
+  if (prefersReducedMotion) {
+    paint(1);
+  }
+
+  let ticking = false;
+  window.addEventListener(
+    'scroll',
+    () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(() => {
+          ticking = false;
+          update();
+        });
       }
     },
     { passive: true }
@@ -97,115 +510,9 @@
   });
 })();
 
-// Hero marquee: curved, seamless, scroll-reactive ribbon of text
-(function heroMarquee() {
-  const wrap = document.querySelector('.hero-marquee');
-  const svg = wrap ? wrap.querySelector('.marquee-svg') : null;
-  const path = document.getElementById('marqueePath');
-  const ribbon = wrap ? wrap.querySelector('.marquee-ribbon') : null;
-  const textPath = document.getElementById('marqueeTextPath');
-  const textEl = wrap ? wrap.querySelector('.marquee-text') : null;
-  if (!wrap || !svg || !path || !ribbon || !textPath || !textEl) return;
-
-  const UNIT =
-    'polaris society ★ launching soon ★ for new york ★ for the daydreamers ★ for the trailblazers ★ for the optimists ★ for connection ★ ';
-  const VIEWBOX_WIDTH = 2400;
-  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  // <textPath> only draws forward from startOffset — nothing before it, and
-  // nothing past the path's own total length, no matter how much text is
-  // queued up. So the path needs slack on BOTH sides of the visible window:
-  // forward slack so a long phrase never runs off the end, and backward
-  // slack so startOffset (which only grows, wrapping within one phrase's
-  // length) never lands close enough to the visible window to expose the
-  // "nothing drawn before this point" edge. Each tile is written as relative
-  // ("c") commands so repeating it just continues the pen from wherever the
-  // previous tile left off; the visible tile is the one matching the static
-  // 'd' already in the HTML (kept as the no-JS fallback). Control points are
-  // derived via Catmull-Rom so the tangent matches exactly at every joint —
-  // including the seam between repeated tiles — leaving no sharp kinks.
-  const TILE =
-    'c 200,-75 483.3,-90 700,-100 c 216.7,-10 400,66.7 600,40 c 200,-26.7 400,-176.7 600,-200 ' +
-    'c 200,-23.3 416.7,108.3 600,60 c 183.3,-48.3 300,-275 500,-350 ';
-  const TILE_DX = 3000;
-  const TILE_DY = -550;
-  const VISIBLE_START = { x: -300, y: 630 };
-  const BACKWARD_TILES = 9;
-  const FORWARD_TILES = 9; // includes the visible tile itself
-  const backStartX = VISIBLE_START.x - TILE_DX * BACKWARD_TILES;
-  const backStartY = VISIBLE_START.y - TILE_DY * BACKWARD_TILES;
-  const EXTENDED_D = `M ${backStartX},${backStartY} ` + TILE.repeat(BACKWARD_TILES + FORWARD_TILES);
-  path.setAttribute('d', EXTENDED_D);
-  ribbon.setAttribute('d', EXTENDED_D);
-
-  let unitLength = 0;
-
-  function setFontSize() {
-    const rect = svg.getBoundingClientRect();
-    if (!rect.width) return;
-    const scale = rect.width / VIEWBOX_WIDTH;
-    const targetPx = window.innerWidth < 700 ? 22 : window.innerWidth < 1100 ? 30 : 38;
-    textEl.style.fontSize = targetPx / scale + 'px';
-  }
-
-  function buildText() {
-    const pathLength = path.getTotalLength();
-    textPath.textContent = UNIT.repeat(24);
-    const total = textPath.getComputedTextLength() || 1;
-    unitLength = total / 24;
-    // belt and suspenders: if this path/unit combo somehow still isn't covered
-    // twice over, add more repeats until it comfortably is.
-    if (unitLength > 0) {
-      const needed = Math.max(24, Math.ceil((pathLength * 2) / unitLength) + 4);
-      if (needed > 24) {
-        textPath.textContent = UNIT.repeat(needed);
-        unitLength = textPath.getComputedTextLength() / needed;
-      }
-    }
-  }
-
-  function layout() {
-    setFontSize();
-    buildText();
-  }
-
-  layout();
-  let resizeTimer;
-  window.addEventListener('resize', () => {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(layout, 150);
-  });
-  if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(layout);
-  }
-
-  if (prefersReducedMotion) return;
-
-  // Scroll belongs entirely to the page now — the marquee just animates on
-  // its own at a constant speed and never touches wheel/touch/scroll events.
-  const baseSpeed = 34; // path units per second
-  let offset = 0;
-  let lastTime = null;
-
-  function frame(now) {
-    if (lastTime === null) lastTime = now;
-    const dt = Math.min((now - lastTime) / 1000, 0.1);
-    lastTime = now;
-
-    if (unitLength > 0) {
-      // increasing startOffset shifts each glyph to a larger path-position, i.e. rightward,
-      // since this path's own parametrization runs left-to-right
-      offset = (offset + baseSpeed * dt) % unitLength;
-    }
-    textPath.setAttribute('startOffset', String(offset));
-    requestAnimationFrame(frame);
-  }
-  requestAnimationFrame(frame);
-})();
-
 // Scroll reveal
 const revealTargets = document.querySelectorAll(
-  '.path-card, .work-card, .service-col, .stat, .section-heading, .company-copy, .cta-headline, .statement-heading'
+  '.path-card, .work-card, .service-col, .stat, .section-heading, .company-copy, .cta-headline, .statement-heading, .reach-heading, .reach-metric'
 );
 revealTargets.forEach((el) => el.classList.add('reveal'));
 
@@ -221,4 +528,12 @@ const io = new IntersectionObserver(
   { threshold: 0.15 }
 );
 revealTargets.forEach((el) => io.observe(el));
+
+// Footer back-to-top: jump above the fold
+document.querySelectorAll('.finale-top-btn').forEach((btn) => {
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
 

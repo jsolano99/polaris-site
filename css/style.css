@@ -1,14 +1,14 @@
 :root {
   --bg: #fbf9f4;
   --bg-alt: #f1ede3;
+  --bg-soft: #eeeae2;
   --ink: #16151b;
   --ink-dim: #5c5a56;
   --ink-faint: #8a8681;
   --accent: #4275d2;
   --accent-dim: #2e56a8;
   --line: rgba(22, 21, 27, 0.12);
-  --display: 'Fraunces', Georgia, 'Times New Roman', serif;
-  --display-variation: 'SOFT' 100, 'WONK' 1;
+  --display: 'DM Serif Display', Georgia, 'Times New Roman', serif;
   --body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --max: 1280px;
 }
@@ -88,6 +88,12 @@ html.intro-locked, html.intro-locked body { overflow: hidden; }
   padding: 26px 5vw;
   background: transparent;
   color: var(--ink);
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+.site-header.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .logo {
@@ -95,8 +101,7 @@ html.intro-locked, html.intro-locked body { overflow: hidden; }
   align-items: center;
   gap: 8px;
   font-family: var(--display);
-  font-variation-settings: var(--display-variation);
-  font-weight: 600;
+  font-weight: 400;
   font-size: 1.3rem;
   letter-spacing: 0.02em;
 }
@@ -126,11 +131,10 @@ main > section {
 
 .section-heading {
   font-family: var(--display);
-  font-variation-settings: var(--display-variation);
-  font-weight: 600;
+  font-weight: 400;
   font-size: clamp(2.2rem, 5vw, 4rem);
   line-height: 1.05;
-  letter-spacing: 0.01em;
+  letter-spacing: -0.02em;
   margin-bottom: 48px;
 }
 
@@ -208,36 +212,44 @@ main > section {
   .wordmark-logo { transition: opacity 0.3s ease; transform: none; }
 }
 
-/* ---------- Hero marquee ribbon ---------- */
-.hero-marquee {
-  position: absolute;
+/* ---------- Statement + Community scroll story ---------- */
+.story {
+  position: relative;
   z-index: 1;
-  left: 0;
-  width: 100%;
-  top: 58vh;
-  bottom: 0;
-  min-height: 220px;
-  overflow: hidden;
-  pointer-events: none;
+  /* Tall runway: polaroid rearrange, then creator-card parade over the copy */
+  height: 400vh;
+  padding: 0 !important;
+  max-width: none !important;
+  margin: 0;
 }
-.marquee-svg { width: 100%; height: 100%; display: block; }
-.marquee-ribbon { opacity: 0.96; }
-.marquee-text {
-  font-family: var(--body);
-  font-weight: 400;
-  font-size: 34px;
-  letter-spacing: 0;
-  text-transform: lowercase;
+.story-pin {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}
+.story-copy {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 5vw 32vh;
+  pointer-events: none;
+  will-change: opacity, filter;
+}
+.story-copy .statement-heading,
+.story-copy .statement-body {
+  pointer-events: auto;
 }
 
-/* ---------- Statement ---------- */
-.statement {
-  text-align: center;
-}
 .statement-heading {
   font-family: var(--display);
-  font-variation-settings: var(--display-variation);
-  font-weight: 600;
+  font-weight: 400;
   font-size: clamp(2rem, 5.5vw, 4.2rem);
   line-height: 1.15;
   max-width: 20ch;
@@ -246,7 +258,7 @@ main > section {
 .statement-body {
   max-width: 62ch;
   margin: 0 auto;
-  font-size: clamp(1.05rem, 1.6vw, 1.35rem);
+  font-size: clamp(1.2rem, 2vw, 1.55rem);
   line-height: 1.75;
 }
 .statement-body p { margin-bottom: 1.4em; }
@@ -255,13 +267,12 @@ main > section {
 /* Words can't break mid-word even though each letter is its own span. */
 .sw-word { display: inline-block; white-space: nowrap; }
 
-/* Each letter starts dim and thin, then opaques and bolds up as the reading
-   line sweeps down through the paragraph on scroll (see initScrollTextReveal
-   in script.js) — matches ranomi.nl's per-letter sweep, same easing curve. */
+/* Each letter starts light/thin, then darkens and bolds as the reading line
+   sweeps down through the paragraph on scroll. */
 .sw {
   display: inline-block;
-  color: var(--ink-dim);
-  font-weight: 400;
+  color: #c9c3b8;
+  font-weight: 300;
   transition: color 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), font-weight 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 .sw.is-revealed {
@@ -271,6 +282,457 @@ main > section {
 
 @media (prefers-reduced-motion: reduce) {
   .sw { color: var(--ink); font-weight: 700; transition: none; }
+}
+
+/* Community polaroid breaker — start clustered under the statement, end as a
+   linear scattered row across the top (Single Fin–style scroll rearrange). */
+.community-polaroids {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  will-change: opacity;
+}
+.comm-polaroid {
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin: 0;
+  will-change: transform;
+  transform-origin: center center;
+}
+.comm-polaroid-frame {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border-radius: 2px;
+  background: #fdfcf8;
+  padding: 5% 5% 16% 5%;
+  box-shadow: 0 18px 36px rgba(15, 15, 20, 0.2);
+}
+.comm-polaroid-photo {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #e5e1d6;
+}
+.comm-polaroid-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Pinned headline the creator cards float over (fooror-style). */
+.community-copy {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 64%;
+  z-index: 2;
+  text-align: center;
+  padding: 0 5vw;
+  opacity: 0;
+  will-change: opacity, transform;
+  pointer-events: none;
+}
+.community-heading {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(2rem, 4.8vw, 3.8rem);
+  line-height: 1.12;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+  max-width: 18ch;
+  margin: 0 auto 22px;
+}
+.community-body {
+  max-width: 48ch;
+  margin: 0 auto;
+  font-size: clamp(1.05rem, 1.5vw, 1.25rem);
+  line-height: 1.65;
+  color: var(--ink-dim);
+}
+
+/* Creator cards parade — float up over the pinned community copy on scroll. */
+.creator-cards {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+.creator-card {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  margin: 0;
+  width: min(300px, 68vw);
+  border-radius: 28px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 28px 60px rgba(15, 15, 20, 0.22);
+  will-change: transform, opacity;
+  transform: translate(-50%, 120vh);
+}
+.creator-card img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+@media (max-width: 900px) {
+  .story { height: 360vh; }
+  .story-copy { padding-bottom: 38vh; }
+  .community-heading { font-size: clamp(1.8rem, 7vw, 2.6rem); }
+  .creator-card { width: min(260px, 74vw); border-radius: 22px; }
+}
+
+/* ---------- Collective reach (bifold) ---------- */
+.reach {
+  max-width: none !important;
+  margin: 0;
+  padding: 140px 5vw !important;
+  background: var(--bg-soft);
+}
+.reach-inner {
+  max-width: var(--max);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: clamp(40px, 8vw, 100px);
+  align-items: start;
+}
+.reach-heading {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(2.2rem, 4.6vw, 3.8rem);
+  line-height: 1.08;
+  letter-spacing: 0.01em;
+  text-align: left;
+  color: var(--ink);
+  margin: 0;
+}
+.reach-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  padding-top: 8px;
+}
+.reach-metric {
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+}
+.reach-num {
+  display: block;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(2.4rem, 4vw, 3.4rem);
+  line-height: 1;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+.reach-label {
+  display: block;
+  max-width: 38ch;
+  font-size: 1.05rem;
+  line-height: 1.55;
+  color: var(--ink-dim);
+}
+
+@media (max-width: 900px) {
+  .reach { padding: 100px 6vw !important; }
+  .reach-inner {
+    grid-template-columns: 1fr;
+    gap: 48px;
+  }
+}
+
+/* ---------- This is Polaris (vertical carousel) ---------- */
+.access {
+  max-width: none !important;
+  margin: 0;
+  padding: 120px 5vw 140px !important;
+  background: #fff;
+  text-align: center;
+}
+.access-heading {
+  text-align: center;
+  margin: 0 auto 56px;
+}
+.access-stage {
+  position: relative;
+  max-width: 1100px;
+  margin: 0 auto;
+  min-height: 460px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.access-photo {
+  width: 100%;
+  transform: rotate(var(--rot, 0deg));
+}
+.access-polaroid {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 2px;
+  background: #fdfcf8;
+  padding: 5% 5% 16% 5%;
+  box-shadow: 0 18px 36px rgba(15, 15, 20, 0.18);
+}
+.access-polaroid-photo {
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: #e5e1d6;
+}
+.access-polaroid-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.access-photos {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: clamp(120px, 14vw, 170px);
+}
+.access-photos--left {
+  left: 0;
+  top: 4%;
+  align-items: flex-start;
+}
+.access-photos--left .access-photo:nth-child(2) {
+  margin-left: 18%;
+  width: 88%;
+}
+.access-photos--left .access-photo:nth-child(3) {
+  margin-left: 6%;
+  width: 92%;
+}
+.access-photos--right {
+  right: 0;
+  bottom: 2%;
+  align-items: flex-end;
+}
+.access-photos--right .access-photo:nth-child(1) {
+  width: 92%;
+  margin-right: 8%;
+}
+.access-photos--right .access-photo:nth-child(2) {
+  width: 100%;
+}
+.access-photos--right .access-photo:nth-child(3) {
+  width: 84%;
+  margin-right: 14%;
+}
+.access-carousel {
+  position: relative;
+  z-index: 2;
+  width: min(560px, 72vw);
+  /* Tall enough for 5 full lines with breathing room above/below */
+  height: 400px;
+  overflow: hidden;
+}
+.access-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  will-change: transform;
+}
+.access-item {
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(1.45rem, 3vw, 2.35rem);
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+  color: rgba(22, 21, 27, 0.28);
+  white-space: nowrap;
+  will-change: color;
+}
+
+@media (max-width: 900px) {
+  .access { padding: 90px 6vw 110px !important; }
+  .access-heading { margin-bottom: 40px; }
+  .access-stage { min-height: 400px; }
+  .access-photos { width: clamp(90px, 22vw, 130px); gap: 12px; }
+  .access-photos--left { top: 0; left: 1%; }
+  .access-photos--right { bottom: 0; right: 1%; }
+  .access-carousel { height: 360px; width: min(420px, 84vw); }
+  .access-item { height: 72px; font-size: clamp(1.2rem, 4.8vw, 1.7rem); }
+}
+
+/* ---------- Belong CTA (full-bleed blue, scroll-filled words) ---------- */
+.belong {
+  max-width: none !important;
+  margin: 0;
+  height: 280vh;
+  padding: 0 !important;
+  background: var(--accent);
+  color: #fffaf5;
+}
+.belong-pin {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8vh 5vw 14vh;
+  text-align: center;
+}
+.belong-inner {
+  width: min(1100px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.12em;
+}
+.belong-lead,
+.belong-end,
+.belong-word {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(2.6rem, 8.2vw, 7.2rem);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  margin: 0;
+}
+.belong-lead {
+  color: rgba(255, 250, 245, 0.92);
+}
+.belong-words {
+  list-style: none;
+  margin: 0.15em 0;
+  padding: 0;
+  width: 100%;
+}
+.belong-word {
+  color: rgba(255, 250, 245, 0.2);
+}
+.belong-end {
+  color: #fffaf5;
+}
+.belong-apply {
+  margin-top: 2.4em;
+  font-family: var(--body);
+  font-size: clamp(1.45rem, 3vw, 2.2rem);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #16151b;
+  transition: color 0.25s ease;
+}
+.belong-apply:hover {
+  color: #fffaf5;
+}
+
+@media (max-width: 900px) {
+  .belong { height: 240vh; }
+  .belong-pin { padding: 10vh 6vw; }
+  .belong-lead,
+  .belong-end,
+  .belong-word {
+    font-size: clamp(2rem, 10vw, 3.6rem);
+  }
+}
+
+/* ---------- Finale footer ---------- */
+.finale {
+  position: relative;
+  z-index: 1;
+  background: #0a0a0a;
+  color: #fffaf5;
+  padding: 48px 4vw 0;
+  overflow: hidden;
+}
+.finale-frame {
+  position: relative;
+  min-height: min(78vh, 720px);
+  padding: 40px 0 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.finale-nav {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  text-align: right;
+}
+.finale-nav a {
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  color: rgba(255, 250, 245, 0.72);
+  transition: color 0.2s ease;
+}
+.finale-nav a:hover {
+  color: #fffaf5;
+}
+.finale-wordmark {
+  position: absolute;
+  left: 50%;
+  bottom: -18%;
+  transform: translateX(-50%);
+  z-index: 1;
+  width: min(96vw, 1100px);
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.9;
+}
+.finale-bottom {
+  position: relative;
+  z-index: 2;
+  margin-top: auto;
+  padding: 28px 0 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 20px;
+  font-size: 0.8rem;
+  letter-spacing: 0.03em;
+  color: rgba(255, 250, 245, 0.45);
+}
+.finale-top-btn {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(255, 250, 245, 0.85);
+  border-radius: 50%;
+  color: #fffaf5;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+.finale-top-btn:hover {
+  background: #fffaf5;
+  color: #0a0a0a;
+  border-color: #fffaf5;
+}
+
+@media (max-width: 900px) {
+  .finale { padding: 28px 4vw 0; }
+  .finale-frame {
+    min-height: 60vh;
+    padding: 28px 0 0;
+  }
+  .finale-nav { align-items: flex-start; text-align: left; }
+  .finale-wordmark {
+    width: min(120vw, 720px);
+    bottom: -14%;
+  }
 }
 
 /* ---------- Paths ---------- */
@@ -287,16 +749,14 @@ main > section {
 }
 .path-index {
   font-family: var(--display);
-  font-variation-settings: var(--display-variation);
-  font-weight: 500;
+  font-weight: 400;
   color: var(--accent-dim);
   font-size: 1rem;
   letter-spacing: 0.1em;
 }
 .path-card h3 {
   font-family: var(--display);
-  font-variation-settings: var(--display-variation);
-  font-weight: 600;
+  font-weight: 400;
   font-size: clamp(1.6rem, 3vw, 2.2rem);
   margin: 18px 0 20px;
   letter-spacing: 0.01em;
@@ -374,8 +834,7 @@ main > section {
 }
 .service-col h3 {
   font-family: var(--display);
-  font-variation-settings: var(--display-variation);
-  font-weight: 600;
+  font-weight: 400;
   font-size: 1.3rem;
   color: var(--accent);
   margin-bottom: 20px;
@@ -409,8 +868,7 @@ main > section {
 .stat-num {
   display: block;
   font-family: var(--display);
-  font-variation-settings: var(--display-variation);
-  font-weight: 600;
+  font-weight: 400;
   font-size: clamp(1.8rem, 3.4vw, 3rem);
   color: var(--accent);
 }
@@ -431,8 +889,7 @@ main > section {
 }
 .cta-headline {
   font-family: var(--display);
-  font-variation-settings: var(--display-variation);
-  font-weight: 600;
+  font-weight: 400;
   font-size: clamp(2.6rem, 7vw, 5.5rem);
   line-height: 1.05;
   margin-bottom: 28px;
@@ -493,7 +950,7 @@ main > section {
 
 /* Headings start in ink and land on the accent blue as they scroll into view,
    echoing ranomi.nl's dim-to-full-color reveal but as a color shift too. */
-.section-heading, .cta-headline { color: var(--ink); }
+.section-heading, .cta-headline, .reach-heading { color: var(--ink); }
 .section-heading.is-visible, .cta-headline.is-visible { color: var(--accent); }
 
 /* ---------- Responsive ---------- */
@@ -506,7 +963,6 @@ main > section {
   .hero { padding-top: 110px !important; }
   .hero-gallery { display: none; }
   .wordmark-logo { width: clamp(240px, 70vw, 420px); }
-  .hero-marquee { top: 68vh; bottom: 0; min-height: 170px; }
 }
 
 @media (max-width: 560px) {
