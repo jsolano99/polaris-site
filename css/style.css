@@ -578,30 +578,36 @@ main > section {
   padding: 0 !important;
   background: var(--accent);
   color: #fffaf5;
+  z-index: 3;
 }
 .belong-pin {
   position: sticky;
   top: 0;
   height: 100vh;
+  height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 8vh 5vw 14vh;
+  padding: clamp(16px, 4vh, 48px) 5vw clamp(24px, 6vh, 72px);
   text-align: center;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 .belong-inner {
   width: min(1100px, 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.12em;
+  gap: 0.08em;
+  max-height: 100%;
 }
 .belong-lead,
 .belong-end,
 .belong-word {
   font-family: var(--display);
   font-weight: 400;
-  font-size: clamp(2.6rem, 8.2vw, 7.2rem);
+  /* vmin keeps type fitting short Mac laptop viewports, not just wide ones */
+  font-size: clamp(1.85rem, 6.2vmin, 6.2rem);
   line-height: 1.02;
   letter-spacing: -0.03em;
   margin: 0;
@@ -611,7 +617,7 @@ main > section {
 }
 .belong-words {
   list-style: none;
-  margin: 0.15em 0;
+  margin: 0.08em 0;
   padding: 0;
   width: 100%;
 }
@@ -622,9 +628,9 @@ main > section {
   color: #fffaf5;
 }
 .belong-apply {
-  margin-top: 2.4em;
+  margin-top: clamp(1em, 3.5vh, 2.2em);
   font-family: var(--body);
-  font-size: clamp(1.45rem, 3vw, 2.2rem);
+  font-size: clamp(1.05rem, 2.4vmin, 2rem);
   font-weight: 500;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -637,11 +643,23 @@ main > section {
 
 @media (max-width: 900px) {
   .belong { height: 240vh; }
-  .belong-pin { padding: 10vh 6vw; }
+  .belong-pin { padding: clamp(12px, 3vh, 32px) 6vw; }
   .belong-lead,
   .belong-end,
   .belong-word {
-    font-size: clamp(2rem, 10vw, 3.6rem);
+    font-size: clamp(1.7rem, 7.5vmin, 3.4rem);
+  }
+}
+
+@media (max-height: 720px) {
+  .belong-lead,
+  .belong-end,
+  .belong-word {
+    font-size: clamp(1.5rem, 5.4vmin, 3.2rem);
+  }
+  .belong-apply {
+    margin-top: 0.85em;
+    font-size: clamp(0.95rem, 2.2vmin, 1.35rem);
   }
 }
 
