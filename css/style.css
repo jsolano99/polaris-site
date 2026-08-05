@@ -185,13 +185,13 @@ main > section {
 .gallery-topright { --rot: 3deg; left: 70%; top: 14%; width: 12%; aspect-ratio: 0.82 / 1; }
 .gallery-farright { --rot: -3deg; left: 85%; top: 28%; width: 8%; aspect-ratio: 0.82 / 1; }
 
-/* Mobile: keep polaroids in the first viewport, scaled and tucked to the edges
-   so the wordmark stays readable (bottom pair sits below the logo band). */
+/* Mobile: polaroids stay in the first viewport but clear the wordmark —
+   top pair in the upper corners, bottom pair anchored to the hero floor. */
 @media (max-width: 900px) {
-  .gallery-topleft { left: -8%; top: 11%; width: 30%; }
-  .gallery-bottomleft { left: -14%; top: 70%; width: 36%; }
-  .gallery-topright { left: auto; right: -8%; top: 10%; width: 28%; }
-  .gallery-farright { left: auto; right: -16%; top: 66%; width: 34%; }
+  .gallery-topleft { left: -10%; top: 12%; width: 28%; }
+  .gallery-topright { left: auto; right: -10%; top: 10%; width: 26%; }
+  .gallery-bottomleft { left: -12%; top: auto; bottom: 3%; width: 34%; }
+  .gallery-farright { left: auto; right: -14%; top: auto; bottom: 5%; width: 32%; }
 }
 
 .hero-center {
