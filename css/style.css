@@ -216,8 +216,8 @@ main > section {
 .story {
   position: relative;
   z-index: 1;
-  /* Tall runway: polaroid rearrange, then creator-card parade over the copy */
-  height: 400vh;
+  /* Runway for the statement fade + polaroid rearrange, then a pinned hold */
+  height: 300vh;
   padding: 0 !important;
   max-width: none !important;
   margin: 0;
@@ -291,7 +291,6 @@ main > section {
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  will-change: opacity;
 }
 .comm-polaroid {
   position: absolute;
@@ -323,12 +322,13 @@ main > section {
   display: block;
 }
 
-/* Pinned headline the creator cards float over (fooror-style). */
+/* Pinned headline that lands below the settled polaroid band. Anchored near the
+   bottom of the sticky frame so the carousel below follows without a dead gap. */
 .community-copy {
   position: absolute;
   left: 0;
   right: 0;
-  top: 64%;
+  bottom: 5vh;
   z-index: 2;
   text-align: center;
   padding: 0 5vw;
@@ -354,37 +354,76 @@ main > section {
   color: var(--ink-dim);
 }
 
-/* Creator cards parade — float up over the pinned community copy on scroll. */
-.creator-cards {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  pointer-events: none;
+@media (max-width: 900px) {
+  .story { height: 280vh; }
+  .story-copy { padding-bottom: 38vh; }
+  .community-heading { font-size: clamp(1.8rem, 7vw, 2.6rem); }
 }
-.creator-card {
-  position: absolute;
-  left: 50%;
-  top: 0;
+
+/* ---------- Creator carousel (horizontal, endless autoplay) ---------- */
+.creators {
+  max-width: none !important;
   margin: 0;
-  width: min(300px, 68vw);
+  padding: 0 0 120px !important;
+  /* Painted explicitly so the cards below have a page-toned backdrop to blend
+     against — a transparent section would isolate the blend and stay white. */
+  background: var(--bg);
+  overflow: hidden;
+}
+.creators-viewport {
+  --card-w: min(320px, 72vw);
+  --card-gap: clamp(16px, 2.4vw, 32px);
+}
+.creators-track {
+  display: flex;
+  gap: var(--card-gap);
+  margin: 0;
+  padding: 14px max(5vw, calc((100% - var(--card-w)) / 2)) 34px;
+  list-style: none;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  cursor: grab;
+}
+.creators-track::-webkit-scrollbar { display: none; }
+/* Snap fights per-frame scroll writes, so it steps aside while gliding/dragging. */
+.creators-track.is-gliding,
+.creators-track.is-dragging {
+  scroll-snap-type: none;
+}
+.creators-track.is-dragging { cursor: grabbing; }
+.creator-card {
+  flex: 0 0 var(--card-w);
+  scroll-snap-align: center;
+  margin: 0;
   border-radius: 28px;
   overflow: hidden;
-  background: #fff;
-  box-shadow: 0 28px 60px rgba(15, 15, 20, 0.22);
-  will-change: transform, opacity;
-  transform: translate(-50%, 120vh);
+  /* Page-toned card rather than white, with a hairline and shadow doing the
+     work of defining the edge. */
+  background: var(--bg);
+  border: 1px solid var(--line);
+  box-shadow: 0 20px 44px rgba(15, 15, 20, 0.13);
 }
 .creator-card img {
   width: 100%;
   height: auto;
   display: block;
+  aspect-ratio: 583 / 1024;
+  object-fit: cover;
+  /* The source art sits on white; multiplying drops that onto the page tone
+     instead of stamping a white block over the background. */
+  mix-blend-mode: multiply;
+  /* Dragging the track shouldn't start a native image drag */
+  -webkit-user-drag: none;
+  user-select: none;
+  pointer-events: none;
 }
 
 @media (max-width: 900px) {
-  .story { height: 360vh; }
-  .story-copy { padding-bottom: 38vh; }
-  .community-heading { font-size: clamp(1.8rem, 7vw, 2.6rem); }
-  .creator-card { width: min(260px, 74vw); border-radius: 22px; }
+  .creators { padding: 0 0 90px !important; }
+  .creators-viewport { --card-w: min(280px, 76vw); }
+  .creator-card { border-radius: 22px; }
 }
 
 /* ---------- Collective reach (bifold) ---------- */

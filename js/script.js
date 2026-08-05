@@ -99,54 +99,44 @@
   update();
 })();
 
-// Statement → Community → Creator cards (fooror-style sticky parade).
+// Statement → Community (sticky scroll story).
 // Phase 1: statement fades, polaroids rearrange into a linear row.
-// Phase 2: community copy fades in and stays pinned.
-// Phase 3: creator cards float up over the copy one by one; after the last
-// card exits, the section unpins into the next page section.
+// Phase 2: community copy fades in and stays pinned for the rest of the runway.
 (function communityScrollStory() {
   const story = document.querySelector('.story');
   const copy = document.querySelector('.story-copy');
   const communityCopy = document.querySelector('.community-copy');
-  const polaroidLayer = document.querySelector('.community-polaroids');
   const polaroids = Array.from(document.querySelectorAll('.comm-polaroid'));
-  const creatorCards = Array.from(document.querySelectorAll('.creator-card'));
   if (!story || !copy || !polaroids.length) return;
 
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Share of the runway spent on the polaroid intro before cards take over.
-  const INTRO_END = 0.28;
-  const COPY_IN_START = 0.18;
-  const CARDS_START = 0.30;
+  // Share of the runway spent rearranging polaroids. The copy only starts
+  // fading in once they've settled, so it never lands on top of a moving photo.
+  const INTRO_END = 0.46;
+  const COPY_IN_START = 0.48;
+  const COPY_IN_END = 0.64;
 
   // from = peeking along the bottom edge (never overlapping the statement);
-  // to = linear scattered row across the top once the copy has faded.
+  // to = a compact scattered band in the top of the viewport, leaving the
+  // lower half clear for the community copy.
   const desktop = [
-    { from: { x: -2, y: 82, w: 13, rot: -8 }, to: { x: -1, y: 8, w: 14, rot: -5 }, ar: '1 / 0.95', z: 3 },
-    { from: { x: 12, y: 88, w: 15, rot: 4 }, to: { x: 14, y: 18, w: 13, rot: 3 }, ar: '0.85 / 1', z: 5 },
-    { from: { x: 28, y: 80, w: 12, rot: -3 }, to: { x: 29, y: 6, w: 15, rot: -4 }, ar: '1 / 0.8', z: 2 },
-    { from: { x: 42, y: 90, w: 14, rot: 6 }, to: { x: 46, y: 16, w: 12, rot: 2.5 }, ar: '0.82 / 1', z: 6 },
-    { from: { x: 56, y: 83, w: 13, rot: -5 }, to: { x: 60, y: 7, w: 14, rot: -3 }, ar: '1 / 0.9', z: 4 },
-    { from: { x: 70, y: 89, w: 14, rot: 3 }, to: { x: 75, y: 20, w: 12, rot: 4 }, ar: '0.88 / 1', z: 3 },
-    { from: { x: 84, y: 81, w: 12, rot: -6 }, to: { x: 88, y: 10, w: 13, rot: -2 }, ar: '1 / 0.85', z: 5 },
+    { from: { x: -2, y: 82, w: 13, rot: -8 }, to: { x: -1, y: 3, w: 13, rot: -5 }, ar: '1 / 0.95', z: 3 },
+    { from: { x: 12, y: 88, w: 15, rot: 4 }, to: { x: 13, y: 11, w: 12, rot: 3 }, ar: '0.85 / 1', z: 5 },
+    { from: { x: 28, y: 80, w: 12, rot: -3 }, to: { x: 27, y: 1, w: 14, rot: -4 }, ar: '1 / 0.8', z: 2 },
+    { from: { x: 42, y: 90, w: 14, rot: 6 }, to: { x: 43, y: 9, w: 11.5, rot: 2.5 }, ar: '0.82 / 1', z: 6 },
+    { from: { x: 56, y: 83, w: 13, rot: -5 }, to: { x: 58, y: 2, w: 13, rot: -3 }, ar: '1 / 0.9', z: 4 },
+    { from: { x: 70, y: 89, w: 14, rot: 3 }, to: { x: 73, y: 11, w: 11.5, rot: 4 }, ar: '0.88 / 1', z: 3 },
+    { from: { x: 84, y: 81, w: 12, rot: -6 }, to: { x: 87, y: 4, w: 12.5, rot: -2 }, ar: '1 / 0.85', z: 5 },
   ];
   const mobile = [
-    { from: { x: -4, y: 84, w: 30, rot: -6 }, to: { x: -2, y: 6, w: 34, rot: -4 }, ar: '1 / 0.95', z: 3 },
-    { from: { x: 28, y: 90, w: 34, rot: 5 }, to: { x: 36, y: 10, w: 32, rot: 3 }, ar: '0.85 / 1', z: 5 },
-    { from: { x: 62, y: 85, w: 32, rot: -3 }, to: { x: 68, y: 8, w: 30, rot: -3.5 }, ar: '1 / 0.8', z: 2 },
-    { from: { x: 8, y: 96, w: 28, rot: 4 }, to: { x: 4, y: 36, w: 32, rot: 2 }, ar: '0.82 / 1', z: 4 },
-    { from: { x: 42, y: 98, w: 30, rot: -5 }, to: { x: 40, y: 40, w: 30, rot: -2 }, ar: '1 / 0.9', z: 6 },
-    { from: { x: 72, y: 94, w: 28, rot: 3 }, to: { x: 70, y: 38, w: 28, rot: 4 }, ar: '0.88 / 1', z: 3 },
-    { from: { x: 20, y: 102, w: 26, rot: -4 }, to: { x: 18, y: 58, w: 28, rot: -3 }, ar: '1 / 0.85', z: 5 },
-  ];
-
-  // Slight left/right drift + tilt so the parade doesn't feel like a slot machine.
-  const cardMotion = [
-    { x: -6, rot: -3 },
-    { x: 7, rot: 2.5 },
-    { x: -4, rot: -2 },
-    { x: 8, rot: 3 },
+    { from: { x: -4, y: 84, w: 30, rot: -6 }, to: { x: -3, y: 1, w: 28, rot: -4 }, ar: '1 / 0.95', z: 3 },
+    { from: { x: 28, y: 90, w: 34, rot: 5 }, to: { x: 25, y: 8, w: 26, rot: 3 }, ar: '0.85 / 1', z: 5 },
+    { from: { x: 62, y: 85, w: 32, rot: -3 }, to: { x: 52, y: 1, w: 28, rot: -3.5 }, ar: '1 / 0.8', z: 2 },
+    { from: { x: 8, y: 96, w: 28, rot: 4 }, to: { x: 74, y: 9, w: 24, rot: 2 }, ar: '0.82 / 1', z: 4 },
+    { from: { x: 42, y: 98, w: 30, rot: -5 }, to: { x: 4, y: 15, w: 24, rot: -2 }, ar: '1 / 0.9', z: 6 },
+    { from: { x: 72, y: 94, w: 28, rot: 3 }, to: { x: 35, y: 17, w: 23, rot: 4 }, ar: '0.88 / 1', z: 3 },
+    { from: { x: 20, y: 102, w: 26, rot: -4 }, to: { x: 66, y: 15, w: 23, rot: -3 }, ar: '1 / 0.85', z: 5 },
   ];
 
   const state = polaroids.map((el) => ({ el, from: null, to: null }));
@@ -161,15 +151,45 @@
     return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
   }
 
+  // How much clear space to keep between the settled polaroids and the copy.
+  const BAND_GAP_VH = 7;
+
   function layout() {
     const keyframes = window.innerWidth < 900 ? mobile : desktop;
     state.forEach((s, i) => {
       const k = keyframes[i];
       if (!k) return;
       s.from = k.from;
-      s.to = k.to;
+      s.to = { ...k.to };
       s.el.style.aspectRatio = k.ar;
       s.el.style.zIndex = String(k.z);
+    });
+
+    // Polaroid widths are in vw but the gap to the copy reads in vh, so the
+    // band's resting height changes with the window's aspect ratio. Slide the
+    // whole band to land a fixed distance above the copy instead.
+    const vh = window.innerHeight / 100;
+    const vw = window.innerWidth / 100;
+    if (!communityCopy || !vh || !vw) return;
+
+    let bandBottom = -Infinity;
+    let bandTop = Infinity;
+    state.forEach((s, i) => {
+      const k = keyframes[i];
+      if (!k || !s.to) return;
+      const [w, h] = k.ar.split('/').map(parseFloat);
+      const heightVh = ((k.to.w * vw) / (w / h)) / vh;
+      bandBottom = Math.max(bandBottom, k.to.y + heightVh);
+      bandTop = Math.min(bandTop, k.to.y);
+    });
+    if (!isFinite(bandBottom)) return;
+
+    const copyBottomVh = (parseFloat(getComputedStyle(communityCopy).bottom) || 0) / vh;
+    const copyTopVh = 100 - copyBottomVh - communityCopy.offsetHeight / vh;
+    // Never drag the band so far up that its first row leaves the viewport.
+    const shift = Math.max(copyTopVh - BAND_GAP_VH - bandBottom, -bandTop);
+    state.forEach((s) => {
+      if (s.to) s.to.y += shift;
     });
   }
 
@@ -181,7 +201,7 @@
     copy.style.opacity = String(copyOpacity);
     copy.style.filter = copyOpacity < 1 ? `blur(${(1 - copyOpacity) * 6}px)` : 'none';
 
-    // Polaroids rearrange during intro, then dim while cards parade.
+    // Polaroids travel from the bottom edge up into their settled band.
     state.forEach(({ el, from, to }) => {
       if (!from || !to) return;
       const x = lerp(from.x, to.x, introT);
@@ -191,41 +211,11 @@
       el.style.width = w + '%';
       el.style.transform = `translate(${x}vw, ${y}vh) rotate(${rot}deg)`;
     });
-    if (polaroidLayer) {
-      const dim = progress > INTRO_END ? clamp(1 - (progress - INTRO_END) / 0.12, 0.25, 1) : 1;
-      polaroidLayer.style.opacity = String(dim);
-    }
-
-    // Community copy fades in near the end of the intro and stays pinned.
-    const headT = clamp((progress - COPY_IN_START) / (INTRO_END - COPY_IN_START), 0, 1);
+    // Community copy fades in after the polaroids land, then stays pinned.
+    const headT = clamp((progress - COPY_IN_START) / (COPY_IN_END - COPY_IN_START), 0, 1);
     if (communityCopy) {
       communityCopy.style.opacity = String(headT);
-      communityCopy.style.transform = `translateY(calc(-50% + ${(1 - headT) * 28}px))`;
-    }
-
-    // Creator cards: each rides from below the fold, through center, off the top.
-    const n = creatorCards.length;
-    if (n) {
-      const cardRun = Math.max(1 - CARDS_START, 0.001);
-      // Travel window per card — shorter = snappier pass-through.
-      const windowSize = cardRun / (n * 0.75);
-      // Start the next card while the previous is still mid-screen (~40% through).
-      const stagger = windowSize * 0.4;
-
-      creatorCards.forEach((card, i) => {
-        const start = CARDS_START + i * stagger;
-        const local = clamp((progress - start) / windowSize, 0, 1);
-        const eased = easeInOut(local);
-        const motion = cardMotion[i % cardMotion.length];
-        // Enter just under the fold so the gap to the copy isn't a huge empty band.
-        const y = lerp(92, -42, eased);
-        const x = motion.x;
-        const rot = motion.rot;
-        const fade = local < 0.06 ? local / 0.06 : local > 0.94 ? (1 - local) / 0.06 : 1;
-        card.style.opacity = String(clamp(fade, 0, 1));
-        card.style.transform = `translate(calc(-50% + ${x}vw), ${y}vh) rotate(${rot}deg)`;
-        card.style.zIndex = String(10 + i);
-      });
+      communityCopy.style.transform = `translateY(${(1 - headT) * 28}px)`;
     }
   }
 
@@ -242,14 +232,21 @@
     apply(progress);
   }
 
+  function relayout() {
+    layout();
+    update();
+  }
+
   layout();
+
+  // The band is placed relative to the copy's measured height, so remeasure
+  // once the display font has swapped in.
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(relayout);
+  }
 
   if (prefersReducedMotion) {
     apply(1);
-    creatorCards.forEach((card, i) => {
-      card.style.opacity = i === creatorCards.length - 1 ? '1' : '0';
-      card.style.transform = 'translate(-50%, 28vh) rotate(0deg)';
-    });
     return;
   }
 
@@ -263,11 +260,211 @@
     },
     { passive: true }
   );
-  window.addEventListener('resize', () => {
-    layout();
-    update();
-  });
+  window.addEventListener('resize', relayout);
   update();
+})();
+
+// Creator carousel: endless autoplay that eases from card to card. Native
+// swipe and click-drag stay available, and the loop never visibly rewinds.
+(function creatorCarousel() {
+  const track = document.getElementById('creators-track');
+  const section = document.querySelector('.creators');
+  if (!track) return;
+
+  const originals = Array.from(track.querySelectorAll('.creator-card'));
+  if (!originals.length) return;
+
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const AUTOPLAY_MS = 2500;
+  // Long enough to read as a glide rather than a jump, short enough to finish
+  // well before the next advance.
+  const GLIDE_MS = 900;
+  const N = originals.length;
+
+  // A duplicate set is what makes the loop endless: stepping past the last card
+  // lands on the clone of the first, and from there we hop back by exactly one
+  // set width — a pixel-identical frame, so the rewind is never visible.
+  originals.forEach((card) => {
+    const clone = card.cloneNode(true);
+    clone.setAttribute('aria-hidden', 'true');
+    const img = clone.querySelector('img');
+    if (img) img.alt = '';
+    track.appendChild(clone);
+  });
+
+  const cards = Array.from(track.querySelectorAll('.creator-card'));
+  let index = 0;
+
+  function scrollTargetFor(i) {
+    const card = cards[i];
+    return card.offsetLeft - (track.clientWidth - card.offsetWidth) / 2;
+  }
+
+  function nearestIndex() {
+    const trackRect = track.getBoundingClientRect();
+    const center = trackRect.left + trackRect.width / 2;
+    let nearest = 0;
+    let best = Infinity;
+    cards.forEach((card, i) => {
+      const rect = card.getBoundingClientRect();
+      const distance = Math.abs(rect.left + rect.width / 2 - center);
+      if (distance < best) {
+        best = distance;
+        nearest = i;
+      }
+    });
+    return nearest;
+  }
+
+  function easeInOut(t) {
+    return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  }
+
+  // Hand-tweened rather than native smooth scrolling so the pacing and easing
+  // are the same in every browser.
+  let glide = null;
+  function cancelGlide() {
+    if (glide) {
+      cancelAnimationFrame(glide);
+      glide = null;
+      track.classList.remove('is-gliding');
+    }
+  }
+
+  function glideTo(left) {
+    cancelGlide();
+    const start = track.scrollLeft;
+    const delta = left - start;
+    if (prefersReducedMotion || Math.abs(delta) < 1) {
+      track.scrollLeft = left;
+      return;
+    }
+    track.classList.add('is-gliding');
+    const startedAt = performance.now();
+    function frame(now) {
+      const t = Math.min(1, (now - startedAt) / GLIDE_MS);
+      track.scrollLeft = start + delta * easeInOut(t);
+      if (t < 1) {
+        glide = requestAnimationFrame(frame);
+      } else {
+        glide = null;
+        track.classList.remove('is-gliding');
+      }
+    }
+    glide = requestAnimationFrame(frame);
+  }
+
+  // Only ever called while the track is at rest, so the shift is invisible.
+  function hop(to) {
+    index = to;
+    track.scrollLeft = scrollTargetFor(index);
+  }
+
+  function go(dir) {
+    if (dir > 0 && index >= N) hop(index - N);
+    else if (dir < 0 && index <= 0) hop(index + N);
+    index += dir;
+    glideTo(scrollTargetFor(index));
+  }
+
+  let timer = null;
+  let paused = false;
+  let visible = true;
+
+  function stopAutoplay() {
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+  }
+  function startAutoplay() {
+    stopAutoplay();
+    if (prefersReducedMotion || paused || !visible) return;
+    timer = setInterval(() => go(1), AUTOPLAY_MS);
+  }
+  // A manual swipe hands control back, so drop any glide still in flight.
+  track.addEventListener('wheel', cancelGlide, { passive: true });
+
+  // Hovering, focusing, or touching the carousel holds it still.
+  ['pointerenter', 'focusin'].forEach((evt) =>
+    track.addEventListener(evt, () => {
+      paused = true;
+      stopAutoplay();
+    })
+  );
+  ['pointerleave', 'focusout'].forEach((evt) =>
+    track.addEventListener(evt, () => {
+      paused = false;
+      startAutoplay();
+    })
+  );
+
+  // Pointer drag. Snapping is disabled mid-drag so the track follows the cursor
+  // one-to-one, then re-enabled on release so it settles on a card.
+  let dragging = false;
+  let startX = 0;
+  let startScroll = 0;
+  let moved = 0;
+
+  track.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'touch') return; // native touch scrolling is better
+    dragging = true;
+    moved = 0;
+    startX = e.clientX;
+    startScroll = track.scrollLeft;
+    track.classList.add('is-dragging');
+    track.setPointerCapture(e.pointerId);
+    cancelGlide();
+    stopAutoplay();
+  });
+
+  track.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    const delta = e.clientX - startX;
+    moved = Math.abs(delta);
+    track.scrollLeft = startScroll - delta;
+  });
+
+  function endDrag(e) {
+    if (!dragging) return;
+    dragging = false;
+    track.classList.remove('is-dragging');
+    if (track.hasPointerCapture(e.pointerId)) track.releasePointerCapture(e.pointerId);
+    if (moved > 4) {
+      // Re-align to whichever card the drag left nearest the center.
+      index = nearestIndex();
+      glideTo(scrollTargetFor(index));
+    }
+    startAutoplay();
+  }
+
+  track.addEventListener('pointerup', endDrag);
+  track.addEventListener('pointercancel', endDrag);
+
+  // Idle offscreen rather than spinning through cards nobody is watching.
+  if (section && 'IntersectionObserver' in window) {
+    new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          visible = entry.isIntersecting;
+          if (visible) startAutoplay();
+          else stopAutoplay();
+        });
+      },
+      { threshold: 0.2 }
+    ).observe(section);
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') startAutoplay();
+    else stopAutoplay();
+  });
+
+  window.addEventListener('resize', () => {
+    cancelGlide();
+    hop(index);
+  });
+
+  startAutoplay();
 })();
 
 // This is Polaris: vertical carousel with clock-like ticks.
