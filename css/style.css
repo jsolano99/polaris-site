@@ -186,12 +186,12 @@ main > section {
 .gallery-farright { --rot: -3deg; left: 85%; top: 28%; width: 8%; aspect-ratio: 0.82 / 1; }
 
 /* Mobile: keep polaroids in the first viewport, scaled and tucked to the edges
-   so the wordmark stays readable. */
+   so the wordmark stays readable (bottom pair sits below the logo band). */
 @media (max-width: 900px) {
-  .gallery-topleft { left: -4%; top: 16%; width: 34%; }
-  .gallery-bottomleft { left: -8%; top: 58%; width: 38%; }
-  .gallery-topright { left: auto; right: -4%; top: 14%; width: 32%; }
-  .gallery-farright { left: auto; right: -10%; top: 48%; width: 30%; }
+  .gallery-topleft { left: -8%; top: 11%; width: 30%; }
+  .gallery-bottomleft { left: -14%; top: 70%; width: 36%; }
+  .gallery-topright { left: auto; right: -8%; top: 10%; width: 28%; }
+  .gallery-farright { left: auto; right: -16%; top: 66%; width: 34%; }
 }
 
 .hero-center {
@@ -406,8 +406,10 @@ main > section {
   margin: 0;
   padding: 0 0 120px !important;
   /* Match the reach band below so the seam under the carousel disappears.
-     Also gives multiply-blended member cards a page-toned backdrop. */
+     isolation keeps mix-blend multiply compositing against this tone only,
+     instead of picking up a colder/whiter stack from layers behind. */
   background: var(--bg-soft);
+  isolation: isolate;
   overflow: hidden;
 }
 .creators-viewport {
@@ -1072,7 +1074,7 @@ main > section {
   .stat-grid { grid-template-columns: repeat(2, 1fr); }
 
   .hero { padding-top: 96px !important; }
-  .wordmark-logo { width: clamp(220px, 62vw, 380px); }
+  .wordmark-logo { width: clamp(200px, 56vw, 340px); }
 }
 
 @media (max-width: 560px) {
