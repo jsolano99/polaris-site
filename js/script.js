@@ -264,8 +264,8 @@
   update();
 })();
 
-// Creator carousel: endless autoplay that eases from card to card. Native
-// swipe and click-drag stay available, and the loop never visibly rewinds.
+// Creator carousel: an endless horizontal loop. Autoplay eases from card to
+// card while native swipe and click-drag stay available.
 (function creatorCarousel() {
   const track = document.getElementById('creators-track');
   const section = document.querySelector('.creators');
@@ -281,31 +281,50 @@
   const GLIDE_MS = 900;
   const N = originals.length;
 
-  // A duplicate set is what makes the loop endless: stepping past the last card
-  // lands on the clone of the first, and from there we hop back by exactly one
-  // set width — a pixel-identical frame, so the rewind is never visible.
-  originals.forEach((card) => {
-    const clone = card.cloneNode(true);
-    clone.setAttribute('aria-hidden', 'true');
-    const img = clone.querySelector('img');
-    if (img) img.alt = '';
-    track.appendChild(clone);
-  });
-
-  const cards = Array.from(track.querySelectorAll('.creator-card'));
+  // Cards live in a repeating strip. `lead` whole sets sit ahead of the range we
+  // actually rest in, and the same number sit behind it, so every direction is
+  // backed by real cards instead of empty padding.
+  let lead = N;
   let index = 0;
 
+  function cardAt(i) {
+    return track.children[i];
+  }
+
+  function step() {
+    const gap = parseFloat(getComputedStyle(track).columnGap) || 0;
+    return originals[0].getBoundingClientRect().width + gap;
+  }
+
+  // Wrapping is only invisible if the strip reaches past both viewport edges for
+  // every position we can rest at, so size it against the current width.
+  function buildStrip() {
+    const stride = step();
+    if (!stride) return;
+    const perSide = Math.ceil(window.innerWidth / 2 / stride) + 1;
+    lead = N * Math.max(1, Math.ceil(perSide / N));
+    const needed = lead * 2 + N;
+    while (track.children.length < needed) {
+      const source = originals[track.children.length % N];
+      const clone = source.cloneNode(true);
+      clone.setAttribute('aria-hidden', 'true');
+      const img = clone.querySelector('img');
+      if (img) img.alt = '';
+      track.appendChild(clone);
+    }
+  }
+
   function scrollTargetFor(i) {
-    const card = cards[i];
+    const card = cardAt(i);
+    if (!card) return track.scrollLeft;
     return card.offsetLeft - (track.clientWidth - card.offsetWidth) / 2;
   }
 
   function nearestIndex() {
-    const trackRect = track.getBoundingClientRect();
-    const center = trackRect.left + trackRect.width / 2;
+    const center = track.getBoundingClientRect().left + track.clientWidth / 2;
     let nearest = 0;
     let best = Infinity;
-    cards.forEach((card, i) => {
+    Array.from(track.children).forEach((card, i) => {
       const rect = card.getBoundingClientRect();
       const distance = Math.abs(rect.left + rect.width / 2 - center);
       if (distance < best) {
@@ -354,22 +373,29 @@
     glide = requestAnimationFrame(frame);
   }
 
-  // Only ever called while the track is at rest, so the shift is invisible.
-  function hop(to) {
-    index = to;
-    track.scrollLeft = scrollTargetFor(index);
+  function settleAt(i) {
+    index = i;
+    track.scrollLeft = scrollTargetFor(i);
+  }
+
+  // Shifting by a whole set lands on an identical-looking frame, so pulling the
+  // resting position back into range is invisible.
+  function recenter(force) {
+    let i = index;
+    while (i >= lead + N) i -= N;
+    while (i < lead) i += N;
+    if (force || i !== index) settleAt(i);
   }
 
   function go(dir) {
-    if (dir > 0 && index >= N) hop(index - N);
-    else if (dir < 0 && index <= 0) hop(index + N);
+    recenter(false);
     index += dir;
     glideTo(scrollTargetFor(index));
   }
 
   let timer = null;
-  let paused = false;
   let visible = true;
+  let dragging = false;
 
   function stopAutoplay() {
     if (timer) {
@@ -379,29 +405,38 @@
   }
   function startAutoplay() {
     stopAutoplay();
-    if (prefersReducedMotion || paused || !visible) return;
+    if (prefersReducedMotion || !visible || dragging) return;
     timer = setInterval(() => go(1), AUTOPLAY_MS);
   }
-  // A manual swipe hands control back, so drop any glide still in flight.
-  track.addEventListener('wheel', cancelGlide, { passive: true });
 
-  // Hovering, focusing, or touching the carousel holds it still.
-  ['pointerenter', 'focusin'].forEach((evt) =>
-    track.addEventListener(evt, () => {
-      paused = true;
-      stopAutoplay();
-    })
+  // Only a sideways gesture is taking over; a plain vertical page scroll passing
+  // over the carousel must not kill the glide.
+  track.addEventListener(
+    'wheel',
+    (e) => {
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) cancelGlide();
+    },
+    { passive: true }
   );
-  ['pointerleave', 'focusout'].forEach((evt) =>
-    track.addEventListener(evt, () => {
-      paused = false;
-      startAutoplay();
-    })
+
+  // A native swipe moves the track without going through go(), so pick the
+  // resting index back up once the scrolling stops.
+  let idleTimer = null;
+  track.addEventListener(
+    'scroll',
+    () => {
+      if (glide || dragging) return;
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => {
+        index = nearestIndex();
+        recenter(false);
+      }, 140);
+    },
+    { passive: true }
   );
 
   // Pointer drag. Snapping is disabled mid-drag so the track follows the cursor
   // one-to-one, then re-enabled on release so it settles on a card.
-  let dragging = false;
   let startX = 0;
   let startScroll = 0;
   let moved = 0;
@@ -451,7 +486,7 @@
           else stopAutoplay();
         });
       },
-      { threshold: 0.2 }
+      { threshold: 0 }
     ).observe(section);
   }
   document.addEventListener('visibilitychange', () => {
@@ -461,9 +496,12 @@
 
   window.addEventListener('resize', () => {
     cancelGlide();
-    hop(index);
+    buildStrip();
+    recenter(true);
   });
 
+  buildStrip();
+  settleAt(lead);
   startAutoplay();
 })();
 
