@@ -143,11 +143,13 @@ main > section {
   position: relative;
   z-index: 1;
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   padding: 130px 0 0 !important;
   max-width: none;
+  background: var(--bg);
 }
 
 .hero-gallery { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
@@ -182,6 +184,15 @@ main > section {
 .gallery-bottomleft { --rot: 2.5deg; left: 4%; top: 50%; width: 17%; aspect-ratio: 1 / 0.8; }
 .gallery-topright { --rot: 3deg; left: 70%; top: 14%; width: 12%; aspect-ratio: 0.82 / 1; }
 .gallery-farright { --rot: -3deg; left: 85%; top: 28%; width: 8%; aspect-ratio: 0.82 / 1; }
+
+/* Mobile: keep polaroids in the first viewport, scaled and tucked to the edges
+   so the wordmark stays readable. */
+@media (max-width: 900px) {
+  .gallery-topleft { left: -4%; top: 16%; width: 34%; }
+  .gallery-bottomleft { left: -8%; top: 58%; width: 38%; }
+  .gallery-topright { left: auto; right: -4%; top: 14%; width: 32%; }
+  .gallery-farright { left: auto; right: -10%; top: 48%; width: 30%; }
+}
 
 .hero-center {
   position: relative;
@@ -221,13 +232,16 @@ main > section {
   padding: 0 !important;
   max-width: none !important;
   margin: 0;
+  background: var(--bg);
 }
 .story-pin {
   position: sticky;
   top: 0;
   height: 100vh;
+  height: 100dvh;
   width: 100%;
   overflow: hidden;
+  background: var(--bg);
 }
 .story-copy {
   position: absolute;
@@ -241,6 +255,7 @@ main > section {
   padding: 0 5vw 32vh;
   pointer-events: none;
   will-change: opacity, filter;
+  box-sizing: border-box;
 }
 .story-copy .statement-heading,
 .story-copy .statement-body {
@@ -356,8 +371,33 @@ main > section {
 
 @media (max-width: 900px) {
   .story { height: 280vh; }
-  .story-copy { padding-bottom: 38vh; }
-  .community-heading { font-size: clamp(1.8rem, 7vw, 2.6rem); }
+  /* Keep the full statement inside the sticky frame — previous padding + type
+     sizes overflowed 100vh and clipped against overflow:hidden. */
+  .story-copy {
+    justify-content: flex-start;
+    padding: max(72px, 12vh) 6vw 30vh;
+  }
+  .statement-heading {
+    font-size: clamp(1.55rem, 6.4vw, 2.35rem);
+    line-height: 1.18;
+    margin: 0 auto 18px;
+    max-width: 18ch;
+  }
+  .statement-body {
+    font-size: clamp(0.95rem, 3.6vw, 1.15rem);
+    line-height: 1.55;
+    max-width: 36ch;
+  }
+  .statement-body p { margin-bottom: 0.9em; }
+  .community-heading { font-size: clamp(1.65rem, 6.5vw, 2.4rem); margin-bottom: 14px; }
+  .community-body { font-size: clamp(0.95rem, 3.5vw, 1.1rem); line-height: 1.5; }
+  .community-copy { bottom: max(16px, 3vh); padding: 0 6vw; }
+}
+
+@media (max-width: 900px) and (max-height: 700px) {
+  .story-copy { padding: max(64px, 10vh) 6vw 26vh; }
+  .statement-heading { font-size: clamp(1.4rem, 5.8vw, 1.9rem); margin-bottom: 12px; }
+  .statement-body { font-size: 0.92rem; line-height: 1.45; }
 }
 
 /* ---------- Creator carousel (horizontal, endless autoplay) ---------- */
@@ -365,9 +405,9 @@ main > section {
   max-width: none !important;
   margin: 0;
   padding: 0 0 120px !important;
-  /* Painted explicitly so the cards below have a page-toned backdrop to blend
-     against — a transparent section would isolate the blend and stay white. */
-  background: var(--bg);
+  /* Match the reach band below so the seam under the carousel disappears.
+     Also gives multiply-blended member cards a page-toned backdrop. */
+  background: var(--bg-soft);
   overflow: hidden;
 }
 .creators-viewport {
@@ -399,9 +439,8 @@ main > section {
   margin: 0;
   border-radius: 28px;
   overflow: hidden;
-  /* Page-toned card rather than white, with a hairline and shadow doing the
-     work of defining the edge. */
-  background: var(--bg);
+  /* Match the section tone so multiply blend doesn't leave a white island. */
+  background: var(--bg-soft);
   border: 1px solid var(--line);
   box-shadow: 0 20px 44px rgba(15, 15, 20, 0.13);
 }
@@ -600,13 +639,41 @@ main > section {
 
 @media (max-width: 900px) {
   .access { padding: 90px 6vw 110px !important; }
-  .access-heading { margin-bottom: 40px; }
-  .access-stage { min-height: 400px; }
-  .access-photos { width: clamp(90px, 22vw, 130px); gap: 12px; }
-  .access-photos--left { top: 0; left: 1%; }
-  .access-photos--right { bottom: 0; right: 1%; }
-  .access-carousel { height: 360px; width: min(420px, 84vw); }
-  .access-item { height: 72px; font-size: clamp(1.2rem, 4.8vw, 1.7rem); }
+  .access-heading { margin-bottom: 32px; }
+  /* Stack photos and copy so polaroids never sit on top of the word list. */
+  .access-stage {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+  }
+  .access-photos {
+    position: relative;
+    left: auto;
+    right: auto;
+    top: auto;
+    bottom: auto;
+    width: min(100%, 360px);
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 10px;
+  }
+  .access-photos--left .access-photo,
+  .access-photos--right .access-photo {
+    margin: 0 !important;
+    width: 32% !important;
+  }
+  /* Three photos per row is enough on a phone; drop the extras. */
+  .access-photos--left .access-photo:nth-child(n + 3),
+  .access-photos--right .access-photo:nth-child(n + 3) {
+    display: none;
+  }
+  .access-photos--left { order: 1; }
+  .access-carousel { order: 2; height: 300px; width: min(100%, 420px); }
+  .access-photos--right { order: 3; }
+  .access-item { height: 60px; font-size: clamp(1.1rem, 4.6vw, 1.45rem); }
 }
 
 /* ---------- Belong CTA (full-bleed blue, scroll-filled words) ---------- */
@@ -1004,9 +1071,8 @@ main > section {
   .services-grid { grid-template-columns: 1fr; gap: 40px; }
   .stat-grid { grid-template-columns: repeat(2, 1fr); }
 
-  .hero { padding-top: 110px !important; }
-  .hero-gallery { display: none; }
-  .wordmark-logo { width: clamp(240px, 70vw, 420px); }
+  .hero { padding-top: 96px !important; }
+  .wordmark-logo { width: clamp(220px, 62vw, 380px); }
 }
 
 @media (max-width: 560px) {
