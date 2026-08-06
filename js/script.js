@@ -27,11 +27,11 @@
   }, 450);
 })();
 
-// Letter-by-letter scroll reveal: each character starts dim/thin and opaques
-// + bolds up as a fixed "reading line" sweeps down through the paragraph on
-// scroll (matches ranomi.nl, which reveals per-letter rather than per-word —
-// the much finer granularity is what makes the sweep read as smooth instead
-// of stepped). Each word is wrapped so it still can't break mid-word.
+// Letter-by-letter scroll reveal: each character starts faint and darkens as a
+// fixed "reading line" sweeps down through the paragraph on scroll (matches
+// ranomi.nl, which reveals per-letter rather than per-word — the much finer
+// granularity is what makes the sweep read as smooth instead of stepped).
+// Each word is wrapped so it still can't break mid-word.
 (function initScrollTextReveal() {
   const containers = document.querySelectorAll('.statement-body');
   if (!containers.length) return;
@@ -69,16 +69,25 @@
 
   function update() {
     ticking = false;
-    // Reading line near the bottom of the viewport so the sweep starts as soon
-    // as the paragraph enters view — by the time the statement section is
-    // framed, a solid chunk of the body has already filled in.
-    const readLine = window.innerHeight * 0.9;
+    // Reading line mid-viewport so the sweep starts as the paragraph enters,
+    // and finishes while the statement is still the focus — before polaroids
+    // take over the sticky runway.
+    const readLine = window.innerHeight * 0.7;
+    const story = document.querySelector('.story');
+    // Once .story pins (top <= 0), polaroids are in motion — force a full fill
+    // so no letters are left faint under the photos.
+    const pinActive = story ? story.getBoundingClientRect().top <= 0 : false;
+
     blocks.forEach(({ container, letters }) => {
+      if (pinActive) {
+        letters.forEach((l) => l.classList.add('is-revealed'));
+        return;
+      }
       const rect = container.getBoundingClientRect();
-      // Modest lead-in so reveal begins before the top hits the reading line,
-      // with a longer travel so the fill sweeps more gradually through scroll.
-      const lead = window.innerHeight * 0.15;
-      const travel = Math.max(rect.height * 1.05, 1);
+      // Early lead-in + short travel so the body is fully dark by the time
+      // the section end / polaroid phase begins.
+      const lead = window.innerHeight * 0.35;
+      const travel = Math.max(rect.height * 0.7, 1);
       const progress = Math.min(1, Math.max(0, (readLine + lead - rect.top) / (travel + lead)));
       const revealCount = Math.round(progress * letters.length);
       letters.forEach((l, i) => l.classList.toggle('is-revealed', i < revealCount));

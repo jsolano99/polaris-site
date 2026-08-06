@@ -273,8 +273,9 @@ main > section {
 .statement-body {
   max-width: 62ch;
   margin: 0 auto;
-  font-size: clamp(1.2rem, 2vw, 1.55rem);
-  line-height: 1.75;
+  font-size: clamp(1.4rem, 2.55vw, 1.9rem);
+  line-height: 1.7;
+  font-weight: 400;
 }
 .statement-body p { margin-bottom: 1.4em; }
 .statement-body p:last-child { margin-bottom: 0; }
@@ -282,21 +283,20 @@ main > section {
 /* Words can't break mid-word even though each letter is its own span. */
 .sw-word { display: inline-block; white-space: nowrap; }
 
-/* Each letter starts light/thin, then darkens and bolds as the reading line
-   sweeps down through the paragraph on scroll. */
+/* Each letter starts faint, then darkens (no weight change) as the reading
+   line sweeps down through the paragraph on scroll. */
 .sw {
   display: inline-block;
-  color: #c9c3b8;
-  font-weight: 300;
-  transition: color 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), font-weight 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  color: #ebe6db;
+  font-weight: 400;
+  transition: color 0.85s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 .sw.is-revealed {
   color: var(--ink);
-  font-weight: 700;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sw { color: var(--ink); font-weight: 700; transition: none; }
+  .sw { color: var(--ink); transition: none; }
 }
 
 /* Community polaroid breaker — start clustered under the statement, end as a
