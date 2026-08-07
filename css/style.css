@@ -796,14 +796,19 @@ main > section {
 .finale-wordmark {
   position: absolute;
   left: 50%;
-  bottom: -18%;
+  bottom: -28%;
   transform: translateX(-50%);
   z-index: 1;
-  width: min(96vw, 1100px);
+  /* Oversized on purpose — wider than the viewport so it reads as cropped.
+     Keep the cap near the asset’s native width so it doesn’t soft-scale. */
+  width: min(118vw, 1280px);
   height: auto;
+  max-width: none;
   pointer-events: none;
   user-select: none;
-  opacity: 0.9;
+  /* Logo art is black; invert then dim to a subtle dark gray on #0a0a0a. */
+  filter: invert(1) brightness(0.22);
+  opacity: 1;
 }
 .finale-bottom {
   position: relative;
@@ -843,8 +848,8 @@ main > section {
   }
   .finale-nav { align-items: flex-start; text-align: left; }
   .finale-wordmark {
-    width: min(120vw, 720px);
-    bottom: -14%;
+    width: min(140vw, 1100px);
+    bottom: -22%;
   }
 }
 
