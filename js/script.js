@@ -277,7 +277,6 @@
 // card while native swipe and click-drag stay available.
 (function creatorCarousel() {
   const track = document.getElementById('creators-track');
-  const section = document.querySelector('.creators');
   if (!track) return;
 
   const originals = Array.from(track.querySelectorAll('.creator-card'));
@@ -403,7 +402,6 @@
   }
 
   let timer = null;
-  let visible = true;
   let dragging = false;
 
   function stopAutoplay() {
@@ -414,7 +412,9 @@
   }
   function startAutoplay() {
     stopAutoplay();
-    if (prefersReducedMotion || !visible || dragging) return;
+    if (prefersReducedMotion || dragging || document.visibilityState !== 'visible') return;
+    // Keep advancing even while the section is still off-screen so the strip
+    // is already mid-loop by the time someone scrolls into it.
     timer = setInterval(() => go(1), AUTOPLAY_MS);
   }
 
@@ -485,19 +485,6 @@
   track.addEventListener('pointerup', endDrag);
   track.addEventListener('pointercancel', endDrag);
 
-  // Idle offscreen rather than spinning through cards nobody is watching.
-  if (section && 'IntersectionObserver' in window) {
-    new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          visible = entry.isIntersecting;
-          if (visible) startAutoplay();
-          else stopAutoplay();
-        });
-      },
-      { threshold: 0 }
-    ).observe(section);
-  }
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') startAutoplay();
     else stopAutoplay();
@@ -511,6 +498,9 @@
 
   buildStrip();
   settleAt(lead);
+  // Kick the first advance immediately so the loop is already moving before
+  // anyone reaches the creators section.
+  if (!prefersReducedMotion) go(1);
   startAutoplay();
 })();
 
