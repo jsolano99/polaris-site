@@ -684,7 +684,8 @@ main > section {
   margin: 0;
   height: 280vh;
   padding: 0 !important;
-  background: var(--accent);
+  /* Cream runway so the pin's rounded bottom reveals "more below." */
+  background: var(--bg);
   color: #fffaf5;
   z-index: 3;
 }
@@ -700,6 +701,8 @@ main > section {
   text-align: center;
   overflow: hidden;
   box-sizing: border-box;
+  background: var(--accent);
+  border-radius: 0 0 clamp(36px, 5vw, 72px) clamp(36px, 5vw, 72px);
 }
 .belong-inner {
   width: min(1100px, 100%);
