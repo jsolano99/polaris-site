@@ -11,6 +11,7 @@
   --display: 'DM Serif Display', Georgia, 'Times New Roman', serif;
   --body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --max: 1280px;
+  --page-inset: clamp(12px, 1.5vw, 20px);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -415,30 +416,30 @@ main > section {
 .creators-viewport {
   --card-w: min(320px, 72vw);
   --card-gap: clamp(16px, 2.4vw, 32px);
+  overflow: hidden;
+  padding: 14px 0 34px;
 }
 .creators-track {
   display: flex;
-  gap: var(--card-gap);
+  width: max-content;
   margin: 0;
-  padding: 14px max(5vw, calc((100% - var(--card-w)) / 2)) 34px;
+  padding: 0;
   list-style: none;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: none;
-  cursor: grab;
+  /* Linear so the strip never eases to a stop between cards. */
+  animation: creators-marquee 32s linear infinite;
+  will-change: transform;
 }
-.creators-track::-webkit-scrollbar { display: none; }
-/* Snap fights per-frame scroll writes, so it steps aside while gliding/dragging. */
-.creators-track.is-gliding,
-.creators-track.is-dragging {
-  scroll-snap-type: none;
+@keyframes creators-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
-.creators-track.is-dragging { cursor: grabbing; }
+@media (prefers-reduced-motion: reduce) {
+  .creators-track { animation: none; }
+}
 .creator-card {
   flex: 0 0 var(--card-w);
-  scroll-snap-align: center;
-  margin: 0;
+  /* Margin (not gap) so two identical sets are exactly 50% of the track. */
+  margin: 0 var(--card-gap) 0 0;
   border-radius: 28px;
   overflow: hidden;
   /* Match the section tone so multiply blend doesn't leave a white island. */
@@ -683,17 +684,17 @@ main > section {
   max-width: none !important;
   margin: 0;
   height: 280vh;
-  padding: 0 !important;
-  /* Cream runway so the pin's rounded bottom reveals "more below." */
+  /* Cream frame around the blue panel, like the events block. */
+  padding: var(--page-inset) var(--page-inset) 0 !important;
   background: var(--bg);
   color: #fffaf5;
   z-index: 3;
 }
 .belong-pin {
   position: sticky;
-  top: 0;
-  height: 100vh;
-  height: 100dvh;
+  top: var(--page-inset);
+  height: calc(100vh - (2 * var(--page-inset)));
+  height: calc(100dvh - (2 * var(--page-inset)));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -702,7 +703,6 @@ main > section {
   overflow: hidden;
   box-sizing: border-box;
   background: var(--accent);
-  border-radius: 0 0 clamp(36px, 5vw, 72px) clamp(36px, 5vw, 72px);
 }
 .belong-inner {
   width: min(1100px, 100%);
@@ -769,6 +769,9 @@ main > section {
   color: #fffaf5;
   padding: 48px 4vw 0;
   overflow: hidden;
+  /* Last section owns the round — a shallow curve, not a tight bite. */
+  margin: var(--page-inset);
+  border-radius: 24px;
 }
 .finale-frame {
   position: relative;
