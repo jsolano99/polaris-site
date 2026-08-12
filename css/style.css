@@ -24,7 +24,8 @@ body {
   font-family: var(--body);
   font-weight: 300;
   line-height: 1.5;
-  overflow-x: hidden;
+  /* clip does not create a scroll container, so position:sticky still works */
+  overflow-x: clip;
 }
 
 a { color: inherit; text-decoration: none; }
@@ -222,6 +223,50 @@ main > section {
 
 @media (prefers-reduced-motion: reduce) {
   .wordmark-logo { transition: opacity 0.3s ease; transform: none; }
+}
+
+.hero-scroll {
+  position: absolute;
+  left: 50%;
+  bottom: max(18px, 2.8vh);
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 52px;
+  transform: translateX(-50%);
+  color: var(--ink-dim);
+  opacity: 0;
+  animation: hero-scroll-in 1s ease 2.1s forwards;
+}
+.hero-scroll-icon {
+  display: block;
+  animation: hero-scroll-nudge 3.2s cubic-bezier(0.45, 0.05, 0.55, 0.95) 2.1s infinite;
+}
+.hero-scroll:focus-visible {
+  outline: 1px solid var(--ink-dim);
+  outline-offset: 4px;
+}
+
+@keyframes hero-scroll-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes hero-scroll-nudge {
+  0%, 100% { transform: translateY(0); opacity: 0.5; }
+  50% { transform: translateY(6px); opacity: 1; }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .hero-scroll:hover { color: var(--ink); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-scroll {
+    opacity: 0.65;
+    animation: none;
+  }
+  .hero-scroll-icon { animation: none; opacity: 1; }
 }
 
 /* ---------- Statement + Community scroll story ---------- */
@@ -425,16 +470,7 @@ main > section {
   margin: 0;
   padding: 0;
   list-style: none;
-  /* Linear so the strip never eases to a stop between cards. */
-  animation: creators-marquee 32s linear infinite;
   will-change: transform;
-}
-@keyframes creators-marquee {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .creators-track { animation: none; }
 }
 .creator-card {
   flex: 0 0 var(--card-w);
@@ -681,26 +717,25 @@ main > section {
 
 /* ---------- Belong CTA (full-bleed blue, scroll-filled words) ---------- */
 .belong {
+  --belong-inset: clamp(16px, 3vh, 32px);
   max-width: none !important;
   margin: 0;
-  height: 280vh;
-  /* Cream frame around the blue panel, like the events block. */
-  padding: var(--page-inset) var(--page-inset) 0 !important;
-  background: var(--bg);
+  height: 200vh;
+  padding: 0 !important;
+  background: var(--accent);
   color: #fffaf5;
-  z-index: 3;
+  z-index: 1;
 }
 .belong-pin {
   position: sticky;
-  top: var(--page-inset);
-  height: calc(100vh - (2 * var(--page-inset)));
-  height: calc(100dvh - (2 * var(--page-inset)));
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 6vh 5vw 10vh;
+  padding: 8vh 5vw;
   text-align: center;
-  overflow: hidden;
   box-sizing: border-box;
   background: var(--accent);
 }
@@ -738,7 +773,7 @@ main > section {
   color: #fffaf5;
 }
 .belong-apply {
-  margin-top: 2em;
+  margin-top: 1.15em;
   font-family: var(--body);
   font-size: clamp(1.35rem, min(3vw, 3.2vh), 2.2rem);
   font-weight: 500;
@@ -752,8 +787,8 @@ main > section {
 }
 
 @media (max-width: 900px) {
-  .belong { height: 240vh; }
-  .belong-pin { padding: 5vh 6vw 8vh; }
+  .belong { height: 180vh; }
+  .belong-pin { padding: 6vh 6vw; }
   .belong-lead,
   .belong-end,
   .belong-word {
@@ -765,21 +800,21 @@ main > section {
 .finale {
   position: relative;
   z-index: 1;
-  background: #0a0a0a;
+  background: var(--accent);
   color: #fffaf5;
-  padding: 48px 4vw 0;
+  padding: 0;
+  margin: 0;
   overflow: hidden;
-  /* Last section owns the round — a shallow curve, not a tight bite. */
-  margin: var(--page-inset);
-  border-radius: 24px;
 }
 .finale-frame {
   position: relative;
   min-height: min(78vh, 720px);
-  padding: 40px 0 0;
+  padding: 40px 4vw 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: #0a0a0a;
+  border-radius: 24px 24px 0 0;
 }
 .finale-nav {
   position: relative;
@@ -847,10 +882,9 @@ main > section {
 }
 
 @media (max-width: 900px) {
-  .finale { padding: 28px 4vw 0; }
   .finale-frame {
     min-height: 60vh;
-    padding: 28px 0 0;
+    padding: 28px 4vw 0;
   }
   .finale-nav { align-items: flex-start; text-align: left; }
   .finale-wordmark {

@@ -273,22 +273,57 @@
   update();
 })();
 
-// Creator carousel: one continuous marquee. A second copy of the cards lets
-// the CSS loop jump from the end back to the start on an identical frame.
+// Creator carousel: a constant-speed marquee. Three identical sets mean
+// Jacob is always followed by Sangavi — the wrap hops back by one set
+// on an identical frame, so the strip never runs out.
 (function creatorCarousel() {
   const track = document.getElementById('creators-track');
   if (!track) return;
 
   const originals = Array.from(track.querySelectorAll('.creator-card'));
   if (!originals.length) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-  originals.forEach((card) => {
-    const clone = card.cloneNode(true);
-    clone.setAttribute('aria-hidden', 'true');
-    const img = clone.querySelector('img');
-    if (img) img.alt = '';
-    track.appendChild(clone);
+  const N = originals.length;
+  for (let copy = 0; copy < 2; copy++) {
+    originals.forEach((card) => {
+      const clone = card.cloneNode(true);
+      clone.setAttribute('aria-hidden', 'true');
+      const img = clone.querySelector('img');
+      if (img) img.alt = '';
+      track.appendChild(clone);
+    });
+  }
+
+  const SPEED = 64;
+  let offset = 0;
+  let setWidth = 0;
+  let last = performance.now();
+
+  function measure() {
+    const first = track.children[0];
+    const loop = track.children[N];
+    if (!first || !loop) return;
+    setWidth = loop.offsetLeft - first.offsetLeft;
+  }
+
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (setWidth > 0) {
+      offset += SPEED * dt;
+      if (offset >= setWidth) offset -= setWidth;
+      track.style.transform = `translate3d(${-offset}px,0,0)`;
+    }
+    requestAnimationFrame(frame);
+  }
+
+  measure();
+  window.addEventListener('resize', measure);
+  document.addEventListener('visibilitychange', () => {
+    last = performance.now();
   });
+  requestAnimationFrame(frame);
 })();
 
 // This is Polaris: vertical carousel with clock-like ticks.
