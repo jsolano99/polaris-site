@@ -191,9 +191,9 @@ main > section {
 /* Mobile: polaroids stay in the first viewport but clear the wordmark —
    top cards in the upper band, bottom pair anchored to the hero floor. */
 @media (max-width: 900px) {
-  .gallery-topleft { left: -11%; top: 11%; width: 29%; }
-  .gallery-topmiddle { left: 34%; top: 3%; width: 30%; }
-  .gallery-topright { left: auto; right: -11%; top: 8%; width: 34%; }
+  .gallery-topleft { left: -11%; top: 14%; width: 29%; }
+  .gallery-topmiddle { left: 34%; top: 16%; width: 30%; }
+  .gallery-topright { left: auto; right: -11%; top: 15%; width: 34%; }
   .gallery-bottomleft { left: -13%; top: auto; bottom: 3%; width: 33%; }
   .gallery-farright { left: auto; right: -15%; top: auto; bottom: 3%; width: 35%; }
 }
