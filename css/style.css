@@ -182,18 +182,20 @@ main > section {
   transform: rotate(var(--rot)) scale(1) translateY(0);
 }
 
-.gallery-topleft { --rot: -3deg; left: 16%; top: 20%; width: 12.5%; aspect-ratio: 1 / 0.92; }
-.gallery-bottomleft { --rot: 2.5deg; left: 4%; top: 50%; width: 17%; aspect-ratio: 1 / 0.8; }
-.gallery-topright { --rot: 3deg; left: 70%; top: 14%; width: 12%; aspect-ratio: 0.82 / 1; }
-.gallery-farright { --rot: -3deg; left: 85%; top: 28%; width: 8%; aspect-ratio: 0.82 / 1; }
+.gallery-topleft { --rot: 3deg; left: 15%; top: 19%; width: 14%; aspect-ratio: 0.82 / 1; }
+.gallery-topmiddle { --rot: -2deg; left: 41%; top: 5%; width: 14.5%; aspect-ratio: 1.2 / 1; }
+.gallery-bottomleft { --rot: 2.5deg; left: 3.5%; top: 50%; width: 16.5%; aspect-ratio: 1 / 0.8; }
+.gallery-topright { --rot: -3deg; left: 67%; top: 11%; width: 17%; aspect-ratio: 1 / 0.92; }
+.gallery-farright { --rot: -3deg; left: 84.5%; top: 50%; width: 11.5%; aspect-ratio: 0.82 / 1; }
 
 /* Mobile: polaroids stay in the first viewport but clear the wordmark —
-   top pair in the upper corners, bottom pair anchored to the hero floor. */
+   top cards in the upper band, bottom pair anchored to the hero floor. */
 @media (max-width: 900px) {
-  .gallery-topleft { left: -10%; top: 12%; width: 28%; }
-  .gallery-topright { left: auto; right: -10%; top: 10%; width: 26%; }
-  .gallery-bottomleft { left: -12%; top: auto; bottom: 3%; width: 34%; }
-  .gallery-farright { left: auto; right: -14%; top: auto; bottom: 5%; width: 32%; }
+  .gallery-topleft { left: -11%; top: 11%; width: 29%; }
+  .gallery-topmiddle { left: 34%; top: 3%; width: 30%; }
+  .gallery-topright { left: auto; right: -11%; top: 8%; width: 34%; }
+  .gallery-bottomleft { left: -13%; top: auto; bottom: 3%; width: 33%; }
+  .gallery-farright { left: auto; right: -15%; top: auto; bottom: 3%; width: 35%; }
 }
 
 .hero-center {
