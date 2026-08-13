@@ -122,9 +122,10 @@
 
   // Share of the runway spent rearranging polaroids. The copy only starts
   // fading in once they've settled, so it never lands on top of a moving photo.
-  const INTRO_END = 0.46;
-  const COPY_IN_START = 0.48;
-  const COPY_IN_END = 0.64;
+  // Tuned for a shorter story runway so one continuous scroll carries through.
+  const INTRO_END = 0.55;
+  const COPY_IN_START = 0.56;
+  const COPY_IN_END = 0.78;
 
   // from = peeking along the bottom edge (never overlapping the statement);
   // to = a compact scattered band in the top of the viewport, leaving the
@@ -205,10 +206,9 @@
   function apply(progress) {
     const introT = easeInOut(clamp(progress / INTRO_END, 0, 1));
 
-    // Statement fades across the intro.
+    // Statement fades across the intro — opacity only (blur was laggy on scroll).
     const copyOpacity = 1 - clamp(progress / (INTRO_END * 0.85), 0, 1);
     copy.style.opacity = String(copyOpacity);
-    copy.style.filter = copyOpacity < 1 ? `blur(${(1 - copyOpacity) * 6}px)` : 'none';
 
     // Polaroids travel from the bottom edge up into their settled band.
     state.forEach(({ el, from, to }) => {
