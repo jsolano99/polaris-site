@@ -131,22 +131,22 @@
   // to = a compact scattered band in the top of the viewport, leaving the
   // lower half clear for the community copy.
   const desktop = [
-    { from: { x: -2, y: 82, w: 13, rot: -8 }, to: { x: -1, y: 3, w: 13, rot: -5 }, ar: '1 / 1', z: 3 },
-    { from: { x: 12, y: 88, w: 15, rot: 4 }, to: { x: 13, y: 11, w: 12, rot: 3 }, ar: '1 / 1', z: 5 },
-    { from: { x: 28, y: 80, w: 12, rot: -3 }, to: { x: 27, y: 1, w: 14, rot: -4 }, ar: '1.2 / 1', z: 2 },
-    { from: { x: 42, y: 90, w: 16, rot: 6 }, to: { x: 41, y: 7, w: 16, rot: 2.5 }, ar: '1.25 / 1', z: 6 },
-    { from: { x: 56, y: 83, w: 13, rot: -5 }, to: { x: 58, y: 2, w: 13, rot: -3 }, ar: '1.2 / 1', z: 4 },
+    { from: { x: -2, y: 82, w: 11, rot: -8 }, to: { x: -1, y: 3, w: 11, rot: -5 }, ar: '1 / 1', z: 3 },
+    { from: { x: 12, y: 88, w: 16, rot: 4 }, to: { x: 12, y: 10, w: 14.5, rot: 3 }, ar: '1.2 / 1', z: 5 },
+    { from: { x: 28, y: 80, w: 12, rot: -3 }, to: { x: 27, y: 1, w: 14, rot: -4 }, ar: '1 / 1', z: 2 },
+    { from: { x: 42, y: 90, w: 20, rot: 6 }, to: { x: 39, y: 4, w: 20.5, rot: 2.5 }, ar: '1.25 / 1', z: 10 },
+    { from: { x: 56, y: 83, w: 13, rot: -5 }, to: { x: 58, y: 2, w: 13, rot: -3 }, ar: '1 / 1', z: 4 },
     { from: { x: 70, y: 89, w: 14, rot: 3 }, to: { x: 73, y: 11, w: 11.5, rot: 4 }, ar: '1 / 1', z: 3 },
-    { from: { x: 84, y: 81, w: 12, rot: -6 }, to: { x: 87, y: 4, w: 12.5, rot: -2 }, ar: '1 / 1', z: 5 },
+    { from: { x: 84, y: 81, w: 14, rot: -6 }, to: { x: 85, y: 3, w: 15, rot: -2 }, ar: '1.2 / 1', z: 5 },
   ];
   const mobile = [
-    { from: { x: -4, y: 84, w: 30, rot: -6 }, to: { x: -3, y: 1, w: 28, rot: -4 }, ar: '1 / 1', z: 3 },
-    { from: { x: 28, y: 90, w: 34, rot: 5 }, to: { x: 25, y: 8, w: 26, rot: 3 }, ar: '1 / 1', z: 5 },
-    { from: { x: 62, y: 85, w: 32, rot: -3 }, to: { x: 52, y: 1, w: 28, rot: -3.5 }, ar: '1.2 / 1', z: 2 },
-    { from: { x: 8, y: 96, w: 32, rot: 4 }, to: { x: 70, y: 7, w: 30, rot: 2 }, ar: '1.25 / 1', z: 4 },
-    { from: { x: 42, y: 98, w: 30, rot: -5 }, to: { x: 4, y: 15, w: 24, rot: -2 }, ar: '1.2 / 1', z: 6 },
+    { from: { x: -4, y: 84, w: 26, rot: -6 }, to: { x: -3, y: 1, w: 24, rot: -4 }, ar: '1 / 1', z: 3 },
+    { from: { x: 28, y: 90, w: 36, rot: 5 }, to: { x: 23, y: 7, w: 30, rot: 3 }, ar: '1.2 / 1', z: 5 },
+    { from: { x: 62, y: 85, w: 32, rot: -3 }, to: { x: 52, y: 1, w: 28, rot: -3.5 }, ar: '1 / 1', z: 2 },
+    { from: { x: 8, y: 96, w: 38, rot: 4 }, to: { x: 66, y: 4, w: 37, rot: 2 }, ar: '1.25 / 1', z: 10 },
+    { from: { x: 42, y: 98, w: 30, rot: -5 }, to: { x: 4, y: 15, w: 24, rot: -2 }, ar: '1 / 1', z: 4 },
     { from: { x: 72, y: 94, w: 28, rot: 3 }, to: { x: 35, y: 17, w: 23, rot: 4 }, ar: '1 / 1', z: 3 },
-    { from: { x: 20, y: 102, w: 26, rot: -4 }, to: { x: 66, y: 15, w: 23, rot: -3 }, ar: '1 / 1', z: 5 },
+    { from: { x: 20, y: 102, w: 30, rot: -4 }, to: { x: 64, y: 14, w: 27, rot: -3 }, ar: '1.2 / 1', z: 5 },
   ];
 
   const state = polaroids.map((el) => ({ el, from: null, to: null }));
